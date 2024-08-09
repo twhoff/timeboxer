@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f9;
+}
+
+.app-container {
+    display: flex;
+    width: 80vw;
+    min-height: 90vh;
+}
+
+.scale-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 50px;
+    background-color: #eaeaea;
+    padding: 5px 0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+    min-height: 100%; /* Ensure it matches the container's height */
+}
+
+.time-label {
+    font-size: 0.8em;
+    padding: 10px 0;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    width: 100%;
+    gap: 1px;
+    background-color: #ccc;
+    min-height: 90vh; /* Ensure it matches the scale-column's height */
+}
+
+.day-column {
+    background-color: white;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.day-header {
+    text-align: center;
+    background-color: #007bff;
+    color: white;
+    padding: 5px 0;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.interval-line {
+    border-top: 1px solid #e0e0e0;
+    width: 100%;
+    box-sizing: border-box;
+    height: calc(100% / 96); /* Divides the column into 96 intervals */
+}
+
+.time-block {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 123, 255, 0.7);
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+.time-block.overlap {
+    background-color: rgba(255, 123, 0, 0.7);
+    margin-left: 5px;
+}
+
+.time-indicator {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 2px 4px;
+    font-size: 0.7em;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-align: center;
+}
