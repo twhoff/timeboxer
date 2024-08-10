@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
-import { saveTimeBlocks, loadTimeBlocks } from './db.ts'
+import { saveTimeBlocks, loadTimeBlocks } from './db'
 import confetti from 'canvas-confetti'
 
 const INTERVAL_HEIGHT = 40 // Static height for each interval
 
-const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+]
 
 const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`)
 
@@ -47,9 +55,12 @@ const App: React.FC = () => {
     useEffect(() => {
         const mouseMoveHandler = (moveEvent: MouseEvent) => {
             if (!currentBlock) return
-            const column = document.querySelectorAll('.day-column')[currentBlock.dayIndex] as HTMLElement
+            const column = document.querySelectorAll('.day-column')[
+                currentBlock.dayIndex
+            ] as HTMLElement
             const rect = column.getBoundingClientRect()
-            const headerHeight = column.querySelector('.day-header')!.offsetHeight
+            const headerHeight =
+                column.querySelector('.day-header')!.offsetHeight
             const currentY = moveEvent.clientY - rect.top - headerHeight
             const endInterval = Math.round(currentY / INTERVAL_HEIGHT) // Snap to nearest interval
             const start = Math.min(currentBlock.start, endInterval)
@@ -66,7 +77,9 @@ const App: React.FC = () => {
 
             const timeRange = `${formatTime(startHour)} - ${formatTime(endHour + 1)}`
             setTimeIndicator(timeRange)
-            setCurrentBlock(prevBlock => (prevBlock ? { ...prevBlock, end: finalEnd } : null))
+            setCurrentBlock(prevBlock =>
+                prevBlock ? { ...prevBlock, end: finalEnd } : null
+            )
         }
 
         const mouseUpHandler = () => {
@@ -74,7 +87,10 @@ const App: React.FC = () => {
                 const { dayIndex, start, end } = currentBlock
                 const newBlock: TimeBlock = {
                     start: Math.min(start, end),
-                    end: start === end ? Math.max(start, end) + 1 : Math.max(start, end),
+                    end:
+                        start === end
+                            ? Math.max(start, end) + 1
+                            : Math.max(start, end),
                 }
 
                 setTimeBlocks(prevBlocks => ({
@@ -102,7 +118,10 @@ const App: React.FC = () => {
         }
     }, [currentBlock])
 
-    const handleMouseDown = (dayIndex: number, e: React.MouseEvent<HTMLDivElement>) => {
+    const handleMouseDown = (
+        dayIndex: number,
+        e: React.MouseEvent<HTMLDivElement>
+    ) => {
         const column = e.currentTarget
         const rect = column.getBoundingClientRect()
         const headerHeight = column.querySelector('.day-header')!.offsetHeight
@@ -111,7 +130,11 @@ const App: React.FC = () => {
         setCurrentBlock({ dayIndex, start: startInterval, end: startInterval })
     }
 
-    const deleteTimeBlock = (dayIndex: number, blockIndex: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    const deleteTimeBlock = (
+        dayIndex: number,
+        blockIndex: number,
+        e: React.MouseEvent<HTMLButtonElement>
+    ) => {
         e.stopPropagation()
         const rect = e.currentTarget.getBoundingClientRect()
         launchConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
@@ -138,6 +161,7 @@ const App: React.FC = () => {
     return (
         <div className="app-container">
             <div className="scale-column">
+                <div className="time-header"></div>
                 {hours.map((hour, index) => (
                     <div key={index} className="time-label">
                         {hour}
@@ -146,7 +170,11 @@ const App: React.FC = () => {
             </div>
             <div className="container">
                 {daysOfWeek.map((day, dayIndex) => (
-                    <div key={dayIndex} className="day-column" onMouseDown={e => handleMouseDown(dayIndex, e)}>
+                    <div
+                        key={dayIndex}
+                        className="day-column"
+                        onMouseDown={e => handleMouseDown(dayIndex, e)}
+                    >
                         <div className="day-header">{day}</div>
                         {Array.from({ length: 24 }).map((_, intervalIndex) => (
                             <div
@@ -155,39 +183,57 @@ const App: React.FC = () => {
                                 style={{ height: INTERVAL_HEIGHT }}
                             ></div>
                         ))}
-                        {(timeBlocks[dayIndex] || []).map((block, blockIndex) => (
-                            <div
-                                key={blockIndex}
-                                className="time-block"
-                                style={{
-                                    top: block.start * INTERVAL_HEIGHT,
-                                    height: (block.end - block.start) * INTERVAL_HEIGHT,
-                                    opacity: 1,
-                                }}
-                            >
-                                <button
-                                    className="bin-icon"
-                                    onClick={e => deleteTimeBlock(dayIndex, blockIndex, e)}
-                                    aria-label="Delete time block"
+                        {(timeBlocks[dayIndex] || []).map(
+                            (block, blockIndex) => (
+                                <div
+                                    key={blockIndex}
+                                    className="time-block"
+                                    style={{
+                                        top: block.start * INTERVAL_HEIGHT,
+                                        height:
+                                            (block.end - block.start) *
+                                            INTERVAL_HEIGHT,
+                                        opacity: 1,
+                                    }}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 448 512"
-                                        width="16"
-                                        height="16"
-                                        fill="#007bff"
+                                    <button
+                                        className="bin-icon"
+                                        onClick={e =>
+                                            deleteTimeBlock(
+                                                dayIndex,
+                                                blockIndex,
+                                                e
+                                            )
+                                        }
+                                        aria-label="Delete time block"
                                     >
-                                        <path d="..."></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        ))}
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 448 512"
+                                            width="16"
+                                            height="16"
+                                            fill="#007bff"
+                                        >
+                                            <path d="..."></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            )
+                        )}
                         {currentBlock && currentBlock.dayIndex === dayIndex && (
                             <div
                                 className="time-block"
                                 style={{
-                                    top: Math.min(currentBlock.start, currentBlock.end) * INTERVAL_HEIGHT,
-                                    height: Math.abs(currentBlock.end - currentBlock.start) * INTERVAL_HEIGHT,
+                                    top:
+                                        Math.min(
+                                            currentBlock.start,
+                                            currentBlock.end
+                                        ) * INTERVAL_HEIGHT,
+                                    height:
+                                        Math.abs(
+                                            currentBlock.end -
+                                                currentBlock.start
+                                        ) * INTERVAL_HEIGHT,
                                     opacity: 0.7,
                                     position: 'absolute',
                                 }}
@@ -198,19 +244,35 @@ const App: React.FC = () => {
                                         position: 'absolute',
                                         left: '50%',
                                         top: (() => {
-                                            const difference = Math.abs(currentBlock.end - currentBlock.start)
+                                            const difference = Math.abs(
+                                                currentBlock.end -
+                                                    currentBlock.start
+                                            )
                                             if (difference > 8) return '50%'
-                                            return currentBlock.end < currentBlock.start ? '-20px' : 'auto'
+                                            return currentBlock.end <
+                                                currentBlock.start
+                                                ? '-20px'
+                                                : 'auto'
                                         })(),
                                         bottom: (() => {
-                                            const difference = Math.abs(currentBlock.end - currentBlock.start)
-                                            if (difference <= 8 && currentBlock.end >= currentBlock.start) {
+                                            const difference = Math.abs(
+                                                currentBlock.end -
+                                                    currentBlock.start
+                                            )
+                                            if (
+                                                difference <= 8 &&
+                                                currentBlock.end >=
+                                                    currentBlock.start
+                                            ) {
                                                 return '-20px'
                                             }
                                             return 'auto'
                                         })(),
                                         transform:
-                                            Math.abs(currentBlock.end - currentBlock.start) > 8
+                                            Math.abs(
+                                                currentBlock.end -
+                                                    currentBlock.start
+                                            ) > 8
                                                 ? 'translate(-50%, -50%)'
                                                 : 'translateX(-50%)',
                                     }}

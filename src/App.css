@@ -1,4 +1,19 @@
-/* Set box-sizing globally for consistency */
+:root {
+    --font-family: Arial, sans-serif;
+    --primary-color: #007bff;
+    --secondary-color: #eaeaea;
+    --hover-color: #0056b3;
+    --background-color: #f4f4f9;
+    --light-background: rgba(255, 255, 255, 0.8);
+    --light-background-hover: rgba(255, 255, 255, 0.5);
+    --alert-color: rgba(255, 123, 0, 0.7);
+    --interval-height: 40px;
+    --header-height: 30px;
+    --font-size-small: 0.8em;
+    --font-size-small-mobile: 0.7em;
+    --font-size-header-mobile: 0.9em;
+}
+
 *,
 *::before,
 *::after {
@@ -6,38 +21,38 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: var(--font-family);
     margin: 0;
     padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f4f4f9;
+    background-color: var(--background-color);
 }
 
 .app-container {
     display: flex;
     width: 80vw;
-    min-height: 90vh;
-    height: auto; /* Allow natural height */
+    height: auto;
 }
 
 .scale-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     width: 50px;
-    background-color: #eaeaea;
-    padding: 5px 0;
+    background-color: var(--secondary-color);
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    flex-grow: 1; /* Allow to grow with the content */
 }
 
 .time-label {
-    font-size: 0.8em;
-    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--interval-height);
+    font-size: var(--font-size-small);
 }
 
 .container {
@@ -46,7 +61,6 @@ body {
     width: 100%;
     gap: 1px;
     background-color: #ccc;
-    flex-grow: 1; /* Allow to grow with the content */
 }
 
 .day-column {
@@ -54,14 +68,16 @@ body {
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
+.time-header,
 .day-header {
-    text-align: center;
-    background-color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
     color: white;
-    padding: 5px 0;
+    height: var(--header-height);
     font-weight: bold;
     position: sticky;
     top: 0;
@@ -71,7 +87,7 @@ body {
 .interval-line {
     border-top: 1px solid #e0e0e0;
     width: 100%;
-    height: 40px; /* Static height for intervals */
+    height: var(--interval-height);
 }
 
 .time-block {
@@ -79,7 +95,7 @@ body {
     left: 0;
     right: 0;
     background-color: rgba(0, 123, 255, 0.7);
-    border: 1px solid #007bff;
+    border: 1px solid var(--primary-color);
     border-radius: 4px;
     z-index: 1;
     transition: transform 0.2s ease-in-out;
@@ -94,12 +110,12 @@ body {
     top: 5px;
     right: 5px;
     border: none;
-    background-color: rgba(255, 255, 255, 0.8); /* Light background */
-    color: #007bff;
+    background-color: var(--light-background);
+    color: var(--primary-color);
     cursor: pointer;
     display: none;
     font-size: 1em;
-    border-radius: 4px; /* Rounded corners */
+    border-radius: 4px;
     padding: 4px;
     transition:
         background-color 0.2s ease-in-out,
@@ -108,19 +124,19 @@ body {
 
 .time-block:hover .bin-icon {
     display: block;
-    background-color: rgba(255, 255, 255, 0.9); /* Slightly darker on hover */
-    color: #0056b3; /* Darker blue on hover */
+    background-color: var(--light-background-hover);
+    color: var(--hover-color);
 }
 
 .time-block.overlap {
-    background-color: rgba(255, 123, 0, 0.7);
+    background-color: var(--alert-color);
     margin-left: 5px;
 }
 
 .time-indicator {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: var(--light-background);
     padding: 2px 4px;
-    font-size: 0.7em;
+    font-size: var(--font-size-small);
     border-radius: 4px;
     white-space: nowrap;
     text-align: center;
@@ -136,10 +152,10 @@ body {
     }
 
     .time-label {
-        font-size: 0.7em;
+        font-size: var(--font-size-small-mobile);
     }
 
     .day-header {
-        font-size: 0.9em;
+        font-size: var(--font-size-header-mobile);
     }
 }

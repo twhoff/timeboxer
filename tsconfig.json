@@ -1,13 +1,14 @@
 {
     "compilerOptions": {
-        "target": "ESNext", // Use latest ECMAScript version
-        "module": "ESNext", // Use ESNext module system
-        "jsx": "react-jsx", // Use new JSX transform
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
         "esModuleInterop": true,
+        "target": "es6",
+        "module": "commonjs",
+        "jsx": "react-jsx", // Use new JSX transform
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "skipLibCheck": true,
-        "moduleResolution": "node", // Node-style module resolution
         "sourceMap": true // Enable source maps for debugging
     },
     "include": ["src/**/*"],
