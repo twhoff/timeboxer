@@ -16,23 +16,44 @@ export const useTimeBlockPlacement = () => {
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
+        // Function to check if the event target or any of its parents is a button
+        const isButtonOrChildOfButton = (
+            element: HTMLElement | null
+        ): boolean => {
+            while (element) {
+                if (element.tagName.toLowerCase() === 'button') {
+                    return true // Found a button in the ancestry
+                }
+                element = element.parentElement
+            }
+            return false
+        }
+
+        // Exit early if the original event target or any of its parents is a button
+        if (isButtonOrChildOfButton(e.target as HTMLElement)) {
+            return
+        }
+
         const column = e.currentTarget as HTMLElement
         const rect = column.getBoundingClientRect()
         const startY = e.clientY - rect.top - HEADER_HEIGHT
         const startInterval = Math.floor(startY / INTERVAL_HEIGHT)
 
         setCurrentBlock({ dayIndex, start: startInterval, end: startInterval })
-        setPointOfOrigin(startInterval) // Use the interval as the point of origin
+        setPointOfOrigin(startInterval)
 
         const currentBlockElement = document.createElement('div')
         currentBlockElement.className = 'time-block stretching'
         currentBlockElement.style.top = `${startInterval * INTERVAL_HEIGHT + HEADER_HEIGHT}px`
-        currentBlockElement.style.height = '0px' // Start with zero height
+        currentBlockElement.style.height = '0px'
         column.appendChild(currentBlockElement)
+
+        const timeIndicatorElement = document.createElement('div')
+        timeIndicatorElement.className = 'time-indicator'
+        currentBlockElement.appendChild(timeIndicatorElement)
 
         blockElementRef.current = currentBlockElement
     }
-
     useEffect(() => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (
@@ -56,10 +77,13 @@ export const useTimeBlockPlacement = () => {
 
             const pixelDifference = currentY - pointOfOrigin * INTERVAL_HEIGHT
 
+            let direction: 'up' | 'down' = 'down'
             if (pixelDifference >= MOUSE_MOVE_THRESHOLD) {
-                end = Math.max(currentInterval + 1, pointOfOrigin + 1) // Move end downwards
+                end = Math.max(currentInterval + 1, pointOfOrigin + 1)
+                direction = 'down'
             } else if (pixelDifference <= -MOUSE_MOVE_THRESHOLD) {
-                start = Math.min(currentInterval, pointOfOrigin - 1) // Move start upwards
+                start = Math.min(currentInterval, pointOfOrigin - 1)
+                direction = 'up'
             }
 
             const blockElement = blockElementRef.current
@@ -75,6 +99,23 @@ export const useTimeBlockPlacement = () => {
             const timeRange = `${formatTime(Math.min(start, end))} - ${formatTime(Math.max(start, end))}`
             setTimeIndicator(timeRange)
 
+            const timeIndicatorElement = blockElement.querySelector(
+                '.time-indicator'
+            ) as HTMLElement
+            if (timeIndicatorElement) {
+                timeIndicatorElement.textContent = timeRange
+                timeIndicatorElement.style.position = 'absolute'
+                timeIndicatorElement.style.left = '50%'
+                timeIndicatorElement.style.transform = 'translateX(-50%)'
+                if (direction !== 'down') {
+                    timeIndicatorElement.style.top = '0'
+                    timeIndicatorElement.style.bottom = 'unset'
+                } else {
+                    timeIndicatorElement.style.bottom = '0'
+                    timeIndicatorElement.style.top = 'unset'
+                }
+            }
+
             setCurrentBlock(prevBlock =>
                 prevBlock
                     ? {
@@ -87,38 +128,63 @@ export const useTimeBlockPlacement = () => {
         }
 
         const handleMouseUp = () => {
-            if (currentBlock) {
-                const { dayIndex, start, end } = currentBlock
-                const newBlock = {
-                    dayIndex,
-                    start: Math.min(start, end),
-                    end: Math.max(start, end),
-                }
-                setTimeBlocks(prevBlocks => ({
-                    ...prevBlocks,
-                    [dayIndex]: [...(prevBlocks[dayIndex] || []), newBlock],
-                }))
-                if (blockElementRef.current) {
-                    blockElementRef.current.classList.remove('stretching')
-                    blockElementRef.current.classList.add('bouncing')
-                    blockElementRef.current.addEventListener(
-                        'animationend',
-                        () => {
-                            blockElementRef.current?.classList.remove(
-                                'bouncing'
-                            )
-                            blockElementRef.current?.remove()
-                            blockElementRef.current = null
-                        },
-                        { once: true }
-                    )
-                }
+            if (
+                !currentBlock ||
+                !blockElementRef.current ||
+                pointOfOrigin === null
+            )
+                return
+
+            const { start, end } = currentBlock
+
+            console.log('Mouse Up Event Detected')
+            console.log('Current Block:', currentBlock)
+            console.log('Start Interval:', start)
+            console.log('End Interval:', end)
+
+            const newBlock = {
+                dayIndex: currentBlock.dayIndex,
+                start,
+                end: start === end ? end + 1 : end,
             }
+
+            console.log('New Block to be Added:', newBlock)
+
+            setTimeBlocks(prevBlocks => {
+                const updatedBlocks = {
+                    ...prevBlocks,
+                    [currentBlock.dayIndex]: [
+                        ...(prevBlocks[currentBlock.dayIndex] || []),
+                        newBlock,
+                    ],
+                }
+                console.log('Updated Time Blocks:', updatedBlocks)
+                return updatedBlocks
+            })
+
+            if (blockElementRef.current) {
+                console.log('Removing and Cleaning Up Block Element')
+                blockElementRef.current.classList.remove('stretching')
+                blockElementRef.current.classList.add('bouncing')
+                blockElementRef.current.addEventListener(
+                    'animationend',
+                    () => {
+                        blockElementRef.current?.classList.remove('bouncing')
+                        blockElementRef.current?.remove()
+                        blockElementRef.current = null
+                        console.log('Block Element Removed')
+                    },
+                    { once: true }
+                )
+            }
+
             setCurrentBlock(null)
             setTimeIndicator('')
             setPointOfOrigin(null)
             document.removeEventListener('mousemove', handleMouseMove)
             document.removeEventListener('mouseup', handleMouseUp)
+
+            console.log('Event Listeners Removed. State Reset.')
         }
 
         document.addEventListener('mousemove', handleMouseMove)

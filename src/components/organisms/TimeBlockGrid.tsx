@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
 import { TimeBlock } from '../molecules/TimeBlock'
 import { IntervalLine } from '../atoms/IntervalLine'
@@ -15,30 +15,31 @@ const daysOfWeek = [
     'Sunday',
 ]
 const INTERVAL_HEIGHT = 40
+const HEADER_HEIGHT = 30
 
 export const TimeBlockGrid: React.FC = () => {
     const { timeBlocks, setTimeBlocks } = useTimeBlockContext()
-    const { handleMouseDown, timeIndicator } = useTimeBlockPlacement()
+    const { handleMouseDown } = useTimeBlockPlacement()
+    const triggerConfetti = useConfetti()
 
     const deleteTimeBlock = (
         dayIndex: number,
         blockIndex: number,
         e: React.MouseEvent<HTMLButtonElement>
     ) => {
-        e.stopPropagation()
+        e.stopPropagation() // Ensure event does not bubble up
         const rect = e.currentTarget.getBoundingClientRect()
-        useConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
-
+        triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
         setTimeBlocks(prevBlocks => {
             const updatedBlocks = { ...prevBlocks }
-            updatedBlocks[dayIndex].splice(blockIndex, 1)
+            if (updatedBlocks[dayIndex]) {
+                updatedBlocks[dayIndex] = updatedBlocks[dayIndex].filter(
+                    (_, index) => index !== blockIndex
+                )
+            }
             return updatedBlocks
         })
     }
-
-    useEffect(() => {
-        console.log('timeIndicator: ', timeIndicator)
-    }, [timeIndicator])
 
     return (
         <div className="container">
@@ -55,7 +56,7 @@ export const TimeBlockGrid: React.FC = () => {
                     {(timeBlocks[dayIndex] || []).map((block, blockIndex) => (
                         <TimeBlock
                             key={blockIndex}
-                            top={block.start * INTERVAL_HEIGHT}
+                            top={block.start * INTERVAL_HEIGHT + HEADER_HEIGHT}
                             height={(block.end - block.start) * INTERVAL_HEIGHT}
                             onDelete={e =>
                                 deleteTimeBlock(dayIndex, blockIndex, e)
@@ -64,7 +65,6 @@ export const TimeBlockGrid: React.FC = () => {
                     ))}
                 </div>
             ))}
-            <div className="time-indicator">{timeIndicator}</div>
         </div>
     )
 }

@@ -8,12 +8,8 @@ const container = document.getElementById('root')
 if (container) {
     const root = createRoot(container)
 
-    root.render(
-        <React.StrictMode>
-            <App />
-        </React.StrictMode>
-    )
+    // Temporarily remove StrictMode to check for double rendering
+    root.render(<App />)
 } else {
-    // Handle the error case where the container is not found
     console.error('Root element not found')
 }

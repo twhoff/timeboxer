@@ -3,7 +3,6 @@ import { openDB, IDBPDatabase, DBSchema } from 'idb'
 const DB_NAME = 'TimeBlockDB'
 const STORE_NAME = 'timeBlocks'
 
-// Define the database schema
 interface TimeBlockDB extends DBSchema {
     [STORE_NAME]: {
         key: string
@@ -22,25 +21,23 @@ export async function initDB(): Promise<IDBPDatabase<TimeBlockDB>> {
 }
 
 export async function saveTimeBlocks(
-    timeBlocks: TimeBlockDB[typeof STORE_NAME]['value']
+    timeBlocks: Record<number, Array<{ start: number; end: number }>>
 ): Promise<void> {
     try {
         const db = await initDB()
         await db.put(STORE_NAME, timeBlocks, 'blocks')
-        console.log('Time blocks saved successfully.')
     } catch (error) {
         console.error('Failed to save time blocks:', error)
     }
 }
 
-export async function loadTimeBlocks(): Promise<
-    TimeBlockDB[typeof STORE_NAME]['value'] | null
-> {
+export async function loadTimeBlocks(): Promise<Record<
+    number,
+    Array<{ start: number; end: number }>
+> | null> {
     try {
         const db = await initDB()
-        const blocks = (await db.get(STORE_NAME, 'blocks')) ?? null // Use nullish coalescing to default to null
-        console.log('Time blocks loaded successfully.')
-        return blocks
+        return (await db.get(STORE_NAME, 'blocks')) ?? null
     } catch (error) {
         console.error('Failed to load time blocks:', error)
         return null

@@ -1,11 +1,12 @@
-// TimeBlockContext.tsx
 import React, {
     createContext,
     useContext,
     useState,
     useMemo,
     useCallback,
+    useEffect,
 } from 'react'
+import { loadTimeBlocks, saveTimeBlocks } from '../db'
 
 export interface TimeBlock {
     dayIndex: number
@@ -34,6 +35,25 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const [timeBlocks, setTimeBlocks] = useState<TimeBlocks>({})
     const [currentBlock, setCurrentBlock] = useState<TimeBlock | null>(null)
+
+    useEffect(() => {
+        const fetchTimeBlocks = async () => {
+            const savedBlocks = await loadTimeBlocks()
+            if (savedBlocks) {
+                setTimeBlocks(savedBlocks as TimeBlocks)
+            }
+        }
+
+        fetchTimeBlocks()
+    }, [])
+
+    useEffect(() => {
+        const saveBlocks = async () => {
+            await saveTimeBlocks(timeBlocks)
+        }
+
+        saveBlocks()
+    }, [timeBlocks])
 
     const clearAllBlocks = useCallback(() => {
         setTimeBlocks({})
