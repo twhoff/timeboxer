@@ -1,24 +1,29 @@
-import React, { useEffect, useState } from 'react' // Removed unused useRef
+import React, { useEffect, useState } from 'react'
 import './App.css'
-import { saveTimeBlocks, loadTimeBlocks } from './db'
+import { saveTimeBlocks, loadTimeBlocks } from './db.ts'
 import confetti from 'canvas-confetti'
+
 const INTERVAL_HEIGHT = 40 // Static height for each interval
 
-const daysOfWeek = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-]
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
 const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`)
 
-const App = () => {
-    const [timeBlocks, setTimeBlocks] = useState({})
-    const [currentBlock, setCurrentBlock] = useState(null)
-    const [timeIndicator, setTimeIndicator] = useState('')
+// Type definitions
+interface TimeBlock {
+    dayIndex: number
+    start: number
+    end: number
+}
+
+interface TimeBlocks {
+    [key: number]: TimeBlock[]
+}
+
+const App: React.FC = () => {
+    const [timeBlocks, setTimeBlocks] = useState<TimeBlocks>({})
+    const [currentBlock, setCurrentBlock] = useState<TimeBlock | null>(null)
+    const [timeIndicator, setTimeIndicator] = useState<string>('')
 
     useEffect(() => {
         const fetchTimeBlocks = async () => {
@@ -40,13 +45,11 @@ const App = () => {
     }, [timeBlocks])
 
     useEffect(() => {
-        const mouseMoveHandler = moveEvent => {
+        const mouseMoveHandler = (moveEvent: MouseEvent) => {
             if (!currentBlock) return
-            const column =
-                document.querySelectorAll('.day-column')[currentBlock.dayIndex]
+            const column = document.querySelectorAll('.day-column')[currentBlock.dayIndex] as HTMLElement
             const rect = column.getBoundingClientRect()
-            const headerHeight =
-                column.querySelector('.day-header').offsetHeight
+            const headerHeight = column.querySelector('.day-header')!.offsetHeight
             const currentY = moveEvent.clientY - rect.top - headerHeight
             const endInterval = Math.round(currentY / INTERVAL_HEIGHT) // Snap to nearest interval
             const start = Math.min(currentBlock.start, endInterval)
@@ -54,27 +57,24 @@ const App = () => {
             const finalEnd = start === end ? end + 1 : end
             const startHour = start
             const endHour = finalEnd
-            const formatTime = hour => {
+
+            const formatTime = (hour: number) => {
                 const period = hour >= 12 ? 'PM' : 'AM'
                 const formattedHour = hour % 12 === 0 ? 12 : hour % 12
                 return `${formattedHour}:00${period}`
             }
-            const timeRange = `${formatTime(startHour)} - ${formatTime(
-                endHour + 1
-            )}`
+
+            const timeRange = `${formatTime(startHour)} - ${formatTime(endHour + 1)}`
             setTimeIndicator(timeRange)
-            setCurrentBlock(prevBlock => ({ ...prevBlock, end: finalEnd }))
+            setCurrentBlock(prevBlock => (prevBlock ? { ...prevBlock, end: finalEnd } : null))
         }
 
         const mouseUpHandler = () => {
             if (currentBlock) {
                 const { dayIndex, start, end } = currentBlock
-                const newBlock = {
+                const newBlock: TimeBlock = {
                     start: Math.min(start, end),
-                    end:
-                        start === end
-                            ? Math.max(start, end) + 1
-                            : Math.max(start, end),
+                    end: start === end ? Math.max(start, end) + 1 : Math.max(start, end),
                 }
 
                 setTimeBlocks(prevBlocks => ({
@@ -102,18 +102,18 @@ const App = () => {
         }
     }, [currentBlock])
 
-    const handleMouseDown = (dayIndex, e) => {
+    const handleMouseDown = (dayIndex: number, e: React.MouseEvent<HTMLDivElement>) => {
         const column = e.currentTarget
         const rect = column.getBoundingClientRect()
-        const headerHeight = column.querySelector('.day-header').offsetHeight
+        const headerHeight = column.querySelector('.day-header')!.offsetHeight
         const startY = e.clientY - rect.top - headerHeight
         const startInterval = Math.floor(startY / INTERVAL_HEIGHT)
         setCurrentBlock({ dayIndex, start: startInterval, end: startInterval })
     }
 
-    const deleteTimeBlock = (dayIndex, blockIndex, e) => {
+    const deleteTimeBlock = (dayIndex: number, blockIndex: number, e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation()
-        const rect = e.target.getBoundingClientRect()
+        const rect = e.currentTarget.getBoundingClientRect()
         launchConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
 
         setTimeBlocks(prevBlocks => {
@@ -123,7 +123,7 @@ const App = () => {
         })
     }
 
-    const launchConfetti = (x, y) => {
+    const launchConfetti = (x: number, y: number) => {
         confetti({
             particleCount: 150,
             spread: 70,
@@ -146,11 +146,7 @@ const App = () => {
             </div>
             <div className="container">
                 {daysOfWeek.map((day, dayIndex) => (
-                    <div
-                        key={dayIndex}
-                        className="day-column"
-                        onMouseDown={e => handleMouseDown(dayIndex, e)}
-                    >
+                    <div key={dayIndex} className="day-column" onMouseDown={e => handleMouseDown(dayIndex, e)}>
                         <div className="day-header">{day}</div>
                         {Array.from({ length: 24 }).map((_, intervalIndex) => (
                             <div
@@ -159,57 +155,39 @@ const App = () => {
                                 style={{ height: INTERVAL_HEIGHT }}
                             ></div>
                         ))}
-                        {(timeBlocks[dayIndex] || []).map(
-                            (block, blockIndex) => (
-                                <div
-                                    key={blockIndex}
-                                    className="time-block"
-                                    style={{
-                                        top: block.start * INTERVAL_HEIGHT,
-                                        height:
-                                            (block.end - block.start) *
-                                            INTERVAL_HEIGHT,
-                                        opacity: 1,
-                                    }}
+                        {(timeBlocks[dayIndex] || []).map((block, blockIndex) => (
+                            <div
+                                key={blockIndex}
+                                className="time-block"
+                                style={{
+                                    top: block.start * INTERVAL_HEIGHT,
+                                    height: (block.end - block.start) * INTERVAL_HEIGHT,
+                                    opacity: 1,
+                                }}
+                            >
+                                <button
+                                    className="bin-icon"
+                                    onClick={e => deleteTimeBlock(dayIndex, blockIndex, e)}
+                                    aria-label="Delete time block"
                                 >
-                                    <button
-                                        className="bin-icon"
-                                        onClick={e =>
-                                            deleteTimeBlock(
-                                                dayIndex,
-                                                blockIndex,
-                                                e
-                                            )
-                                        }
-                                        aria-label="Delete time block"
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 448 512"
+                                        width="16"
+                                        height="16"
+                                        fill="#007bff"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 448 512"
-                                            width="16"
-                                            height="16"
-                                            fill="#007bff"
-                                        >
-                                            <path d="..."></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            )
-                        )}
+                                        <path d="..."></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        ))}
                         {currentBlock && currentBlock.dayIndex === dayIndex && (
                             <div
                                 className="time-block"
                                 style={{
-                                    top:
-                                        Math.min(
-                                            currentBlock.start,
-                                            currentBlock.end
-                                        ) * INTERVAL_HEIGHT,
-                                    height:
-                                        Math.abs(
-                                            currentBlock.end -
-                                                currentBlock.start
-                                        ) * INTERVAL_HEIGHT,
+                                    top: Math.min(currentBlock.start, currentBlock.end) * INTERVAL_HEIGHT,
+                                    height: Math.abs(currentBlock.end - currentBlock.start) * INTERVAL_HEIGHT,
                                     opacity: 0.7,
                                     position: 'absolute',
                                 }}
@@ -220,35 +198,19 @@ const App = () => {
                                         position: 'absolute',
                                         left: '50%',
                                         top: (() => {
-                                            const difference = Math.abs(
-                                                currentBlock.end -
-                                                    currentBlock.start
-                                            )
+                                            const difference = Math.abs(currentBlock.end - currentBlock.start)
                                             if (difference > 8) return '50%'
-                                            return currentBlock.end <
-                                                currentBlock.start
-                                                ? '-20px'
-                                                : 'auto'
+                                            return currentBlock.end < currentBlock.start ? '-20px' : 'auto'
                                         })(),
                                         bottom: (() => {
-                                            const difference = Math.abs(
-                                                currentBlock.end -
-                                                    currentBlock.start
-                                            )
-                                            if (
-                                                difference <= 8 &&
-                                                currentBlock.end >=
-                                                    currentBlock.start
-                                            ) {
+                                            const difference = Math.abs(currentBlock.end - currentBlock.start)
+                                            if (difference <= 8 && currentBlock.end >= currentBlock.start) {
                                                 return '-20px'
                                             }
                                             return 'auto'
                                         })(),
                                         transform:
-                                            Math.abs(
-                                                currentBlock.end -
-                                                    currentBlock.start
-                                            ) > 8
+                                            Math.abs(currentBlock.end - currentBlock.start) > 8
                                                 ? 'translate(-50%, -50%)'
                                                 : 'translateX(-50%)',
                                     }}

@@ -3,6 +3,7 @@ import js from '@eslint/js'
 import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin'
 import react from 'eslint-plugin-react'
 import prettier from 'eslint-plugin-prettier'
+import typescriptParser from '@typescript-eslint/parser' // Import the TypeScript parser
 
 const tsRecommended = typescriptEslintPlugin.configs.recommended.rules
 const prettierRecommended = {
@@ -14,6 +15,7 @@ export default [
         files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
         languageOptions: {
             globals: globals.browser,
+            parser: typescriptParser, // Set the TypeScript parser
             parserOptions: {
                 ecmaVersion: 'latest',
                 sourceType: 'module',
@@ -35,10 +37,7 @@ export default [
             quotes: ['error', 'single', { avoidEscape: true }],
             'no-unused-vars': 'error',
             'no-nested-ternary': 'error',
-            'react/jsx-filename-extension': [
-                'warn',
-                { extensions: ['.jsx', '.tsx'] },
-            ],
+            'react/jsx-filename-extension': ['warn', { extensions: ['.jsx', '.tsx'] }],
             'react/react-in-jsx-scope': 'off',
             ...prettierRecommended,
         },
