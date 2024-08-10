@@ -21,7 +21,9 @@ export async function initDB(): Promise<IDBPDatabase<TimeBlockDB>> {
     })
 }
 
-export async function saveTimeBlocks(timeBlocks: TimeBlockDB[typeof STORE_NAME]['value']): Promise<void> {
+export async function saveTimeBlocks(
+    timeBlocks: TimeBlockDB[typeof STORE_NAME]['value']
+): Promise<void> {
     try {
         const db = await initDB()
         await db.put(STORE_NAME, timeBlocks, 'blocks')
@@ -31,7 +33,9 @@ export async function saveTimeBlocks(timeBlocks: TimeBlockDB[typeof STORE_NAME][
     }
 }
 
-export async function loadTimeBlocks(): Promise<TimeBlockDB[typeof STORE_NAME]['value'] | null> {
+export async function loadTimeBlocks(): Promise<
+    TimeBlockDB[typeof STORE_NAME]['value'] | null
+> {
     try {
         const db = await initDB()
         const blocks = (await db.get(STORE_NAME, 'blocks')) ?? null // Use nullish coalescing to default to null

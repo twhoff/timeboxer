@@ -53,6 +53,7 @@ body {
     justify-content: center;
     height: var(--interval-height);
     font-size: var(--font-size-small);
+    transform: translateY(-50%);
 }
 
 .container {
@@ -98,13 +99,33 @@ body {
     border: 1px solid var(--primary-color);
     border-radius: 4px;
     z-index: 1;
-    transition: transform 0.2s ease-in-out;
+    transition:
+        height 0.2s ease-in-out,
+        top 0.2s ease-in-out; /* Ensure top position animates smoothly */
 }
-
+.time-block.stretching {
+    transform: scaleY(1.05) scaleX(0.98);
+}
+.time-block.bouncing {
+    animation: elastic 0.8s ease-out forwards;
+}
+@keyframes elastic {
+    0% {
+        transform: scaleY(1.05) scaleX(0.98);
+    }
+    30% {
+        transform: scaleY(0.95) scaleX(1.02);
+    }
+    60% {
+        transform: scaleY(1.02) scaleX(0.99);
+    }
+    100% {
+        transform: scaleY(1) scaleX(1);
+    }
+}
 .time-block:hover {
     transform: scale(1.02);
 }
-
 .bin-icon {
     position: absolute;
     top: 5px;
