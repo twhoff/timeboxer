@@ -1,0 +1,14 @@
+{
+    "editor.formatOnSave": true, // Enable formatting on save
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "prettier.requireConfig": true, // Only use Prettier when a config file is present
+    "eslint.alwaysShowStatus": true // Show ESLint status in the status bar
+}

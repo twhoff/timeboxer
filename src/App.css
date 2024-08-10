@@ -1,3 +1,10 @@
+/* Set box-sizing globally for consistency */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -13,6 +20,7 @@ body {
     display: flex;
     width: 80vw;
     min-height: 90vh;
+    height: auto; /* Allow natural height */
 }
 
 .scale-column {
@@ -24,8 +32,7 @@ body {
     background-color: #eaeaea;
     padding: 5px 0;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    z-index: 2;
-    min-height: 100%; /* Ensure it matches the container's height */
+    flex-grow: 1; /* Allow to grow with the content */
 }
 
 .time-label {
@@ -39,7 +46,7 @@ body {
     width: 100%;
     gap: 1px;
     background-color: #ccc;
-    min-height: 90vh; /* Ensure it matches the scale-column's height */
+    flex-grow: 1; /* Allow to grow with the content */
 }
 
 .day-column {
@@ -64,8 +71,7 @@ body {
 .interval-line {
     border-top: 1px solid #e0e0e0;
     width: 100%;
-    box-sizing: border-box;
-    height: calc(100% / 96); /* Divides the column into 96 intervals */
+    height: 40px; /* Static height for intervals */
 }
 
 .time-block {
@@ -75,8 +81,35 @@ body {
     background-color: rgba(0, 123, 255, 0.7);
     border: 1px solid #007bff;
     border-radius: 4px;
-    box-sizing: border-box;
     z-index: 1;
+    transition: transform 0.2s ease-in-out;
+}
+
+.time-block:hover {
+    transform: scale(1.02);
+}
+
+.bin-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.8); /* Light background */
+    color: #007bff;
+    cursor: pointer;
+    display: none;
+    font-size: 1em;
+    border-radius: 4px; /* Rounded corners */
+    padding: 4px;
+    transition:
+        background-color 0.2s ease-in-out,
+        color 0.2s ease-in-out;
+}
+
+.time-block:hover .bin-icon {
+    display: block;
+    background-color: rgba(255, 255, 255, 0.9); /* Slightly darker on hover */
+    color: #0056b3; /* Darker blue on hover */
 }
 
 .time-block.overlap {
@@ -91,4 +124,22 @@ body {
     border-radius: 4px;
     white-space: nowrap;
     text-align: center;
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        width: 95vw;
+    }
+
+    .scale-column {
+        width: 40px;
+    }
+
+    .time-label {
+        font-size: 0.7em;
+    }
+
+    .day-header {
+        font-size: 0.9em;
+    }
 }
