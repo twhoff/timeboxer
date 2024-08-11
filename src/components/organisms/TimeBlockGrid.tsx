@@ -81,10 +81,9 @@ export const TimeBlockGrid: React.FC = () => {
                         <IntervalLine key={intervalIndex} />
                     ))}
                     {(timeBlocks[dayIndex] || []).map(block => (
-                        <>
+                        <div key={block.id}>
                             {block.id !== null && (
                                 <TimeBlock
-                                    key={block.id}
                                     className={
                                         block.id === bouncingBlockId
                                             ? 'bouncing'
@@ -103,7 +102,7 @@ export const TimeBlockGrid: React.FC = () => {
                                     }
                                 />
                             )}
-                        </>
+                        </div>
                     ))}
                     {activeDay === dayIndex && blockProps && (
                         <TimeBlockPreview blockProps={blockProps} />

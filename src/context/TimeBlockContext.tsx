@@ -6,7 +6,12 @@ import React, {
     useCallback,
     useEffect,
 } from 'react'
-import { loadTimeBlocks, saveTimeBlocks } from '../db'
+import {
+    loadTimeBlocks,
+    saveTimeBlocks,
+    loadSchedules,
+    saveSchedules,
+} from '../db'
 
 export interface TimeBlock {
     id: string
@@ -15,7 +20,13 @@ export interface TimeBlock {
     end: number
 }
 
-interface TimeBlocks {
+export interface Schedule {
+    id: string
+    name: string
+    isActive: boolean
+}
+
+export interface TimeBlocks {
     [key: number]: TimeBlock[]
 }
 
@@ -27,9 +38,11 @@ interface TimeBlockContextType {
     clearAllBlocks: () => void
     recentBlockId: string | null
     setRecentBlockId: React.Dispatch<React.SetStateAction<string | null>>
+    schedules: Schedule[]
+    setSchedules: React.Dispatch<React.SetStateAction<Schedule[]>>
 }
 
-const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
+export const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
     undefined
 )
 
@@ -39,6 +52,8 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     const [timeBlocks, setTimeBlocks] = useState<TimeBlocks>({})
     const [currentBlock, setCurrentBlock] = useState<TimeBlock | null>(null)
     const [recentBlockId, setRecentBlockId] = useState<string | null>(null)
+    const [schedules, setSchedules] = useState<Schedule[]>([])
+
     useEffect(() => {
         const fetchTimeBlocks = async () => {
             const savedBlocks = await loadTimeBlocks()
@@ -48,16 +63,34 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         fetchTimeBlocks()
     }, [])
+
     useEffect(() => {
         const saveBlocks = async () => {
             await saveTimeBlocks(timeBlocks)
         }
         saveBlocks()
     }, [timeBlocks])
+
+    useEffect(() => {
+        const fetchSchedules = async () => {
+            const loadedSchedules = await loadSchedules()
+            setSchedules(loadedSchedules)
+        }
+        fetchSchedules()
+    }, [])
+
+    useEffect(() => {
+        const saveCurrentSchedules = async () => {
+            await saveSchedules(schedules)
+        }
+        saveCurrentSchedules()
+    }, [schedules])
+
     const clearAllBlocks = useCallback(() => {
         setTimeBlocks({})
         setRecentBlockId(null)
     }, [])
+
     const value = useMemo(
         () => ({
             timeBlocks,
@@ -67,9 +100,12 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             clearAllBlocks,
             recentBlockId,
             setRecentBlockId,
+            schedules,
+            setSchedules,
         }),
-        [timeBlocks, currentBlock, clearAllBlocks, recentBlockId]
+        [timeBlocks, currentBlock, clearAllBlocks, recentBlockId, schedules]
     )
+
     return (
         <TimeBlockContext.Provider value={value}>
             {children}

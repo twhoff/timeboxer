@@ -33,8 +33,70 @@ body {
 
 .app-container {
     display: flex;
-    width: 80vw;
+    width: 100vw;
     height: auto;
+}
+
+.sidebar {
+    min-width: 200px;
+    width: 20vw;
+    background-color: var(--secondary-color);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+}
+
+ul {
+    list-style-type: none; /* Remove bullet points */
+    padding: 0; /* Remove default padding */
+}
+
+li {
+    display: flex;
+    align-items: center; /* Align checkbox and text vertically */
+    margin-bottom: 0.5rem; /* Space between each schedule */
+}
+
+label {
+    display: flex;
+    align-items: center; /* Align checkbox and label text */
+    cursor: pointer; /* Change cursor to pointer for better UX */
+}
+
+input[type="checkbox"] {
+    margin-right: 0.5rem; /* Space between checkbox and label text */
+}
+
+.add-schedule {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.add-schedule input {
+    flex-grow: 1;
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.add-schedule button {
+    background-color: var(--primary-color);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-schedule button svg {
+    fill: white;
+}
+
+.add-schedule button:hover {
+    background-color: var(--hover-color);
 }
 
 .scale-column {
@@ -59,7 +121,7 @@ body {
 .container {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    width: 100%;
+    width: calc(100% - 10vw - 50px);
     gap: 1px;
     background-color: #ccc;
 }
@@ -164,15 +226,17 @@ body {
     text-align: center;
 }
 
+
 @media (max-width: 768px) {
     .app-container {
-        width: 95vw;
+        width: 100vw;
     }
-
+    .sidebar {
+        width: 20vw;
+    }
     .scale-column {
         width: 40px;
     }
-
     .time-label {
         font-size: var(--font-size-small-mobile);
     }
