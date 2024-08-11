@@ -46,24 +46,54 @@ body {
 }
 
 ul {
-    list-style-type: none; /* Remove bullet points */
-    padding: 0; /* Remove default padding */
+    list-style-type: none;
+    padding: 0;
 }
 
 li {
     display: flex;
-    align-items: center; /* Align checkbox and text vertically */
-    margin-bottom: 0.5rem; /* Space between each schedule */
+    align-items: center;
+    margin-bottom: 0.5rem;
+    position: relative;
+    transition: color 0.3s, background-color 0.3s;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.color-square {
+    width: 16px;
+    height: 16px;
+    transition: width 0.3s ease, height 0.3s ease, left 0.3s ease;
+    border-radius: 4px;
+    margin-left: auto;
+    z-index: 0;
+    position: absolute;
+    right: 0;
+}
+.schedule-item.selected .color-square {
+    width: 100%;
+    height: 100%;
+    left: 0;
+}
+.schedule-item.selected {
+    color: white;
+}
+input[type="checkbox"] {
+    margin-right: 0.5rem;
+    z-index: 1;
+}
+button {
+    z-index: 1;
+    margin-left: 0.5rem;
+    flex-grow: 1;
+    text-align: left;
 }
 
 label {
     display: flex;
-    align-items: center; /* Align checkbox and label text */
-    cursor: pointer; /* Change cursor to pointer for better UX */
-}
-
-input[type="checkbox"] {
-    margin-right: 0.5rem; /* Space between checkbox and label text */
+    align-items: center;
+    cursor: pointer;
 }
 
 .add-schedule {
@@ -163,15 +193,18 @@ input[type="checkbox"] {
     z-index: 1;
     transition:
         height 0.05s ease-out,
-        top 0.05s ease-out, /* Ensure top position animates smoothly */
+        top 0.05s ease-out,
         transform 0.2s ease-in-out;
 }
+
 .time-block.stretching {
     transform: scaleY(1.05) scaleX(0.98);
 }
+
 .time-block.bouncing {
     animation: elastic 0.8s ease-out forwards;
 }
+
 @keyframes elastic {
     0% {
         transform: scaleY(1.05) scaleX(0.98);
@@ -186,9 +219,11 @@ input[type="checkbox"] {
         transform: scaleY(1) scaleX(1);
     }
 }
+
 .time-block:hover {
     transform: scale(1.02);
 }
+
 .bin-icon {
     position: absolute;
     top: 5px;
@@ -225,7 +260,6 @@ input[type="checkbox"] {
     white-space: nowrap;
     text-align: center;
 }
-
 
 @media (max-width: 768px) {
     .app-container {

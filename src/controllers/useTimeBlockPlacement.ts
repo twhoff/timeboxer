@@ -3,13 +3,18 @@ import { useTimeBlockContext } from '../context/TimeBlockContext'
 import { v4 as uuidv4 } from 'uuid'
 import type { TimeBlock } from '../context/TimeBlockContext'
 
-const INTERVAL_HEIGHT = 40 // 40 pixels remain
+const INTERVAL_HEIGHT = 40
 const HEADER_HEIGHT = 30
-const MOUSE_MOVE_THRESHOLD = INTERVAL_HEIGHT / 4 / 4 // Updated threshold
+const MOUSE_MOVE_THRESHOLD = INTERVAL_HEIGHT / 4 / 4
 
 export const useTimeBlockPlacement = () => {
-    const { currentBlock, setCurrentBlock, setTimeBlocks, setRecentBlockId } =
-        useTimeBlockContext()
+    const {
+        currentBlock,
+        setCurrentBlock,
+        setTimeBlocks,
+        setRecentBlockId,
+        selectedSchedule,
+    } = useTimeBlockContext()
     const [timeIndicator, setTimeIndicator] = useState<string>('')
     const [pointOfOrigin, setPointOfOrigin] = useState<number | null>(null)
     const [blockProps, setBlockProps] = useState<{
@@ -23,7 +28,10 @@ export const useTimeBlockPlacement = () => {
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
-        console.log(`handleMouseDown triggered on dayIndex: ${dayIndex}`)
+        if (!selectedSchedule) {
+            alert('Please select a schedule before adding time blocks.')
+            return
+        }
 
         const isButtonOrChildOfButton = (
             element: HTMLElement | null
@@ -65,9 +73,10 @@ export const useTimeBlockPlacement = () => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!currentBlock || pointOfOrigin === null) return
 
-            const column = document.querySelectorAll('.day-column')[
-                currentBlock.dayIndex
-            ] as HTMLElement
+            const column =
+                document.querySelectorAll<HTMLElement>('.day-column')[
+                    currentBlock.dayIndex
+                ]
             if (!column) return
 
             const rect = column.getBoundingClientRect()
@@ -108,7 +117,7 @@ export const useTimeBlockPlacement = () => {
                     HEADER_HEIGHT,
                 height: Math.abs(end - start) * (INTERVAL_HEIGHT / 4),
                 timeRange,
-                direction, // Include direction in blockProps
+                direction,
             })
 
             setCurrentBlock(prevBlock =>
@@ -123,12 +132,13 @@ export const useTimeBlockPlacement = () => {
         }
 
         const handleMouseUp = () => {
-            if (!currentBlock || pointOfOrigin === null) return
+            if (!currentBlock || pointOfOrigin === null || !selectedSchedule)
+                return
 
             const { start, end } = currentBlock
 
             const newBlock: TimeBlock = {
-                id: uuidv4(), // Generate a unique ID for each block
+                id: uuidv4(),
                 dayIndex: currentBlock.dayIndex,
                 start,
                 end: start === end ? end + 1 : end,
@@ -136,18 +146,15 @@ export const useTimeBlockPlacement = () => {
 
             console.log('Creating new block:', newBlock)
 
-            setTimeBlocks(prevBlocks => {
-                const updatedBlocks = {
-                    ...prevBlocks,
-                    [currentBlock.dayIndex]: [
-                        ...(prevBlocks[currentBlock.dayIndex] || []),
-                        newBlock,
-                    ],
-                }
-                return updatedBlocks
-            })
+            setTimeBlocks(prevBlocks => ({
+                ...prevBlocks,
+                [selectedSchedule]: [
+                    ...(prevBlocks[selectedSchedule] || []),
+                    newBlock,
+                ],
+            }))
 
-            setRecentBlockId(newBlock.id) // Set recent block ID
+            setRecentBlockId(newBlock.id)
 
             setCurrentBlock(null)
             setTimeIndicator('')
@@ -170,6 +177,7 @@ export const useTimeBlockPlacement = () => {
         setCurrentBlock,
         setTimeBlocks,
         setRecentBlockId,
+        selectedSchedule,
     ])
 
     return { handleMouseDown, blockProps, timeIndicator }

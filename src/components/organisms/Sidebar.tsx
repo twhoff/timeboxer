@@ -1,4 +1,3 @@
-// src/components/organisms/Sidebar.tsx
 import React, { useState, useContext } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { TimeBlockContext } from '../../context/TimeBlockContext'
@@ -9,11 +8,10 @@ const Sidebar: React.FC = () => {
         useContext(TimeBlockContext)!
     const [newScheduleName, setNewScheduleName] = useState('')
 
-    const addSchedule = () => {
+    const addSchedule = async () => {
         if (newScheduleName.trim() === '') return
 
-        const existingColors = schedules.map(schedule => schedule.color)
-        const { color, bgColor } = generateADHDFriendlyColors(existingColors)
+        const { color, bgColor } = await generateADHDFriendlyColors()
 
         const newSchedule = {
             id: uuidv4(),
@@ -44,7 +42,11 @@ const Sidebar: React.FC = () => {
     }
 
     const toggleSelectedSchedule = (id: string) => {
-        setSelectedSchedule(prevSelected => (prevSelected === id ? null : id))
+        if (selectedSchedule === id) {
+            setSelectedSchedule(null)
+        } else {
+            setSelectedSchedule(id)
+        }
     }
 
     return (
@@ -54,16 +56,15 @@ const Sidebar: React.FC = () => {
                 {schedules.map(schedule => (
                     <li
                         key={schedule.id}
+                        className={`schedule-item ${
+                            selectedSchedule === schedule.id ? 'selected' : ''
+                        }`}
+                        onClick={() => toggleSelectedSchedule(schedule.id)}
                         style={{
                             backgroundColor:
                                 selectedSchedule === schedule.id
                                     ? schedule.bgColor
                                     : 'transparent',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
                         }}
                     >
                         <input
@@ -74,8 +75,13 @@ const Sidebar: React.FC = () => {
                             }
                             onClick={e => e.stopPropagation()}
                         />
+                        <div
+                            className="color-square"
+                            style={{
+                                backgroundColor: schedule.bgColor,
+                            }}
+                        />
                         <button
-                            onClick={() => toggleSelectedSchedule(schedule.id)}
                             style={{
                                 border: 'none',
                                 background: 'none',
@@ -87,6 +93,8 @@ const Sidebar: React.FC = () => {
                                     selectedSchedule === schedule.id
                                         ? schedule.color
                                         : 'inherit',
+                                zIndex:
+                                    selectedSchedule === schedule.id ? 1 : 0,
                             }}
                         >
                             {schedule.name}
@@ -99,7 +107,7 @@ const Sidebar: React.FC = () => {
                     type="text"
                     value={newScheduleName}
                     onChange={e => setNewScheduleName(e.target.value)}
-                    onKeyPress={handleKeyPress} // Add event listener for key press
+                    onKeyPress={handleKeyPress}
                     placeholder="Add new schedule"
                 />
                 <button onClick={addSchedule}>

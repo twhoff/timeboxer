@@ -28,13 +28,11 @@ export interface Schedule {
     bgColor: string
 }
 
-export interface TimeBlocks {
-    [key: number]: TimeBlock[]
-}
-
 interface TimeBlockContextType {
-    timeBlocks: TimeBlocks
-    setTimeBlocks: React.Dispatch<React.SetStateAction<TimeBlocks>>
+    timeBlocks: Record<string, TimeBlock[]>
+    setTimeBlocks: React.Dispatch<
+        React.SetStateAction<Record<string, TimeBlock[]>>
+    >
     currentBlock: TimeBlock | null
     setCurrentBlock: React.Dispatch<React.SetStateAction<TimeBlock | null>>
     clearAllBlocks: () => void
@@ -53,7 +51,9 @@ export const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
 export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
-    const [timeBlocks, setTimeBlocks] = useState<TimeBlocks>({})
+    const [timeBlocks, setTimeBlocks] = useState<Record<string, TimeBlock[]>>(
+        {}
+    )
     const [currentBlock, setCurrentBlock] = useState<TimeBlock | null>(null)
     const [recentBlockId, setRecentBlockId] = useState<string | null>(null)
     const [schedules, setSchedules] = useState<Schedule[]>([])
@@ -62,26 +62,24 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     )
 
     useEffect(() => {
-        const fetchTimeBlocks = async () => {
-            const savedBlocks = await loadTimeBlocks()
-            if (savedBlocks) {
-                setTimeBlocks(savedBlocks as TimeBlocks)
-            }
-        }
-        fetchTimeBlocks()
-    }, [])
-
-    useEffect(() => {
-        const saveBlocks = async () => {
-            await saveTimeBlocks(timeBlocks)
-        }
-        saveBlocks()
-    }, [timeBlocks])
-
-    useEffect(() => {
         const fetchSchedules = async () => {
             const loadedSchedules = await loadSchedules()
             setSchedules(loadedSchedules)
+
+            // Initially set selectedSchedule to null
+            setSelectedSchedule(null)
+
+            // Load time blocks for all active schedules
+            loadedSchedules.forEach(schedule => {
+                if (schedule.isActive) {
+                    loadTimeBlocks(schedule.id).then(loadedTimeBlocks => {
+                        setTimeBlocks(prevBlocks => ({
+                            ...prevBlocks,
+                            [schedule.id]: loadedTimeBlocks,
+                        }))
+                    })
+                }
+            })
         }
         fetchSchedules()
     }, [])
@@ -93,10 +91,41 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         saveCurrentSchedules()
     }, [schedules])
 
+    useEffect(() => {
+        // Listen for changes in schedules to load time blocks for newly active schedules
+        schedules.forEach(schedule => {
+            if (schedule.isActive && !(schedule.id in timeBlocks)) {
+                loadTimeBlocks(schedule.id).then(loadedTimeBlocks => {
+                    setTimeBlocks(prevBlocks => ({
+                        ...prevBlocks,
+                        [schedule.id]: loadedTimeBlocks,
+                    }))
+                })
+            }
+        })
+    }, [schedules, timeBlocks])
+
+    useEffect(() => {
+        if (selectedSchedule) {
+            const saveCurrentTimeBlocks = async () => {
+                await saveTimeBlocks(
+                    selectedSchedule,
+                    timeBlocks[selectedSchedule] || []
+                )
+            }
+            saveCurrentTimeBlocks()
+        }
+    }, [timeBlocks, selectedSchedule])
+
     const clearAllBlocks = useCallback(() => {
-        setTimeBlocks({})
-        setRecentBlockId(null)
-    }, [])
+        if (selectedSchedule) {
+            setTimeBlocks(prevBlocks => ({
+                ...prevBlocks,
+                [selectedSchedule]: [],
+            }))
+            setRecentBlockId(null)
+        }
+    }, [selectedSchedule])
 
     const value = useMemo(
         () => ({
