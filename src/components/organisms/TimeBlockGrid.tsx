@@ -55,13 +55,17 @@ export const TimeBlockGrid: React.FC = () => {
         )
         const rect = e.currentTarget.getBoundingClientRect()
         triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
+
         setTimeBlocks(prevBlocks => {
             const updatedBlocks = { ...prevBlocks }
+
+            // Iterate over all schedules to remove the block
             Object.keys(updatedBlocks).forEach(scheduleId => {
                 updatedBlocks[scheduleId] = updatedBlocks[scheduleId].filter(
                     block => block.id !== blockId
                 )
             })
+
             return updatedBlocks
         })
     }
@@ -70,10 +74,33 @@ export const TimeBlockGrid: React.FC = () => {
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
+        console.log(`Mouse down on day column: ${daysOfWeek[dayIndex]}`)
+        // Check if the event target is a button or its child
+        const isButtonOrChild = (element: HTMLElement | null): boolean => {
+            while (element) {
+                if (element.tagName.toLowerCase() === 'button') {
+                    console.log('Detected click on a button, ignoring.')
+                    return true
+                }
+                element = element.parentElement
+            }
+            return false
+        }
+        if (isButtonOrChild(e.target as HTMLElement)) {
+            console.log(
+                'Click event originated from a button or its child; stopping propagation.'
+            )
+            e.stopPropagation() // Stop propagation if it's from a button
+            return
+        }
         if (!selectedSchedule) {
+            console.log('No schedule selected; showing alert.')
             alert('Please select a schedule before adding time blocks.')
             return
         }
+        console.log(
+            'Setting active day and proceeding with mouse down handling.'
+        )
         setActiveDay(dayIndex)
         handleMouseDown(dayIndex, e)
     }
@@ -99,6 +126,7 @@ export const TimeBlockGrid: React.FC = () => {
                     <div key={block.id}>
                         {block.id !== null && (
                             <TimeBlock
+                                scheduleId={scheduleId} // Pass scheduleId to TimeBlock
                                 className={
                                     block.id === bouncingBlockId
                                         ? 'bouncing'
@@ -138,23 +166,17 @@ export const TimeBlockGrid: React.FC = () => {
                     {Array.from({ length: 24 }).map((_, intervalIndex) => (
                         <IntervalLine key={intervalIndex} />
                     ))}
-                    {schedules.map(schedule =>
-                        schedule.isActive
-                            ? renderTimeBlocks(
-                                  schedule.id,
-                                  0.6, // Use lower opacity for non-selected schedules
-                                  dayIndex,
-                                  1 // Use default z-index for non-selected schedules
-                              )
-                            : null
+                    {schedules.map(
+                        schedule =>
+                            (schedule.isActive ||
+                                schedule.id === selectedSchedule) &&
+                            renderTimeBlocks(
+                                schedule.id,
+                                schedule.id === selectedSchedule ? 0.8 : 0.6,
+                                dayIndex,
+                                schedule.id === selectedSchedule ? 2 : 1
+                            )
                     )}
-                    {selectedSchedule &&
-                        renderTimeBlocks(
-                            selectedSchedule,
-                            0.8, // Higher opacity for selectedSchedule
-                            dayIndex,
-                            2 // Higher z-index for selectedSchedule
-                        )}
                     {activeDay === dayIndex && blockProps && (
                         <TimeBlockPreview
                             blockProps={blockProps}

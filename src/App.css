@@ -188,13 +188,14 @@ label {
     left: 0;
     right: 0;
     background-color: rgba(0, 123, 255, 0.7);
-    border: 1px solid var(--primary-color);
+    border: 1px solid transparent; /* Default border color for transition */
     border-radius: 4px;
     z-index: 1;
     transition:
         height 0.05s ease-out,
         top 0.05s ease-out,
-        transform 0.2s ease-in-out;
+        transform 0.2s ease-in-out,
+        border-color 0.3s ease-in-out; /* Include border-color transition */
 }
 
 .time-block.stretching {
@@ -245,6 +246,15 @@ label {
     display: block;
     background-color: var(--light-background-hover);
     color: var(--hover-color);
+}
+
+.bin-lid {
+    transform-origin: 50px 18px; /* Set origin to the right edge of the lid */
+    transition: transform 0.3s ease;
+}
+
+.bin-icon:hover .bin-lid {
+    transform: rotate(30deg); /* Rotate the lid to 'open' it from the right */
 }
 
 .time-block.overlap {

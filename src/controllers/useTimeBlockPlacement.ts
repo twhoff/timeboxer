@@ -28,16 +28,17 @@ export const useTimeBlockPlacement = () => {
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
-        if (!selectedSchedule) {
-            alert('Please select a schedule before adding time blocks.')
-            return
-        }
+        console.log('Mouse down event detected')
 
-        const isButtonOrChildOfButton = (
+        // More precise check for the delete button or its descendants
+        const isDeleteButtonOrChild = (
             element: HTMLElement | null
         ): boolean => {
             while (element) {
-                if (element.tagName.toLowerCase() === 'button') {
+                if (
+                    element.tagName.toLowerCase() === 'button' &&
+                    element.classList.contains('bin-icon')
+                ) {
                     return true
                 }
                 element = element.parentElement
@@ -45,14 +46,29 @@ export const useTimeBlockPlacement = () => {
             return false
         }
 
-        if (isButtonOrChildOfButton(e.target as HTMLElement)) {
+        if (isDeleteButtonOrChild(e.target as HTMLElement)) {
+            console.log(
+                'Clicked on delete button or child, exiting handleMouseDown'
+            )
             return
+        } else {
+            console.log('Click is not on delete button or child')
+        }
+
+        if (!selectedSchedule) {
+            console.log('No schedule selected, showing alert')
+            alert('Please select a schedule before adding time blocks.')
+            return
+        } else {
+            console.log('Schedule is selected, proceeding with handleMouseDown')
         }
 
         const column = e.currentTarget as HTMLElement
         const rect = column.getBoundingClientRect()
         const startY = e.clientY - rect.top - HEADER_HEIGHT
         const startInterval = Math.round(startY / (INTERVAL_HEIGHT / 4))
+
+        console.log('Setting current block with startInterval:', startInterval)
 
         setCurrentBlock({
             id: 'preview',
@@ -68,7 +84,6 @@ export const useTimeBlockPlacement = () => {
             direction: null,
         })
     }
-
     useEffect(() => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!currentBlock || pointOfOrigin === null) return

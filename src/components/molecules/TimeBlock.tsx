@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTimeBlockContext } from '../../context/TimeBlockContext'
 
 interface TimeBlockProps {
     top: number
@@ -9,6 +10,7 @@ interface TimeBlockProps {
     bgColor?: string
     opacity?: number // Prop for controlling opacity
     zIndex?: number // Prop for controlling z-index
+    scheduleId: string // Add scheduleId to differentiate
 }
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -27,7 +29,13 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
     bgColor = '#e0e0e0',
     opacity = 1,
     zIndex = 1,
+    scheduleId,
 }) => {
+    const { selectedSchedule } = useTimeBlockContext()
+
+    // Determine border color based on selection status
+    const borderColor = scheduleId === selectedSchedule ? color : bgColor
+
     return (
         <div
             data-testid="time-block"
@@ -36,28 +44,44 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                 top: `${top}px`,
                 height: `${height}px`,
                 backgroundColor: hexToRgba(bgColor, opacity), // Apply opacity to background
+                borderColor, // Apply dynamic border color
+                borderWidth: '1px', // Set border width to 1px
+                borderStyle: 'solid', // Ensure border style is solid
                 zIndex, // Apply z-index
                 position: 'absolute', // Ensure z-index is effective
             }}
         >
             <button
                 className="bin-icon"
-                onClick={onDelete}
+                onClick={e => {
+                    e.stopPropagation() // Stop event propagation
+                    onDelete(e)
+                }}
                 aria-label="Delete time block"
                 style={{
-                    backgroundColor: hexToRgba(color, opacity), // Apply opacity to button color
+                    backgroundColor: hexToRgba(color, opacity),
                     border: 'none',
                     cursor: 'pointer',
                 }}
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 448 512"
+                    viewBox="0 0 64 64"
                     width="16"
                     height="16"
                     fill={bgColor}
                 >
-                    <path d="M135.2 17.7C138.4 7.3 147.8 0 158.4 0H289.6c10.5 0 20 7.3 23.2 17.7L320 32H448c8.8 0 16 7.2 16 16s-7.2 16-16 16H432l-20.5 371.2c-1.2 21.5-19.1 38.8-40.7 38.8H76.1c-21.6 0-39.5-17.3-40.7-38.8L15 64H0c-8.8 0-16-7.2-16-16s7.2-16 16-16H128L135.2 17.7zM432 80H16L36.5 451.2c.7 12.8 11 22.8 23.6 22.8H391.9c12.6 0 22.9-10 23.6-22.8L432 80zM176 144c8.8 0 16 7.2 16 16v240c0 8.8-7.2 16-16 16s-16-7.2-16-16V160c0-8.8 7.2-16 16-16zm96 0c8.8 0 16 7.2 16 16v240c0 8.8-7.2 16-16 16s-16-7.2-16-16V160c0-8.8 7.2-16 16-16z" />
+                    <rect x="16" y="24" width="32" height="32" rx="2" ry="2" />
+                    <g className="bin-lid">
+                        <rect
+                            x="14"
+                            y="14"
+                            width="36"
+                            height="8"
+                            rx="1"
+                            ry="1"
+                        />
+                    </g>
                 </svg>
             </button>
         </div>
