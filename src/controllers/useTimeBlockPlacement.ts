@@ -1,35 +1,42 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTimeBlockContext } from '../context/TimeBlockContext'
+import { v4 as uuidv4 } from 'uuid'
+import type { TimeBlock } from '../context/TimeBlockContext'
 
-const INTERVAL_HEIGHT = 40
+const INTERVAL_HEIGHT = 40 // 40 pixels remain
 const HEADER_HEIGHT = 30
-const MOUSE_MOVE_THRESHOLD = 10 // Threshold of 10 pixels
+const MOUSE_MOVE_THRESHOLD = INTERVAL_HEIGHT / 4 / 4 // Updated threshold
 
 export const useTimeBlockPlacement = () => {
-    const { currentBlock, setCurrentBlock, setTimeBlocks } =
+    const { currentBlock, setCurrentBlock, setTimeBlocks, setRecentBlockId } =
         useTimeBlockContext()
-    const blockElementRef = useRef<HTMLElement | null>(null)
     const [timeIndicator, setTimeIndicator] = useState<string>('')
     const [pointOfOrigin, setPointOfOrigin] = useState<number | null>(null)
+    const [blockProps, setBlockProps] = useState<{
+        top: number
+        height: number
+        timeRange: string
+        direction: 'up' | 'down' | null
+    } | null>(null)
 
     const handleMouseDown = (
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
-        // Function to check if the event target or any of its parents is a button
+        console.log(`handleMouseDown triggered on dayIndex: ${dayIndex}`)
+
         const isButtonOrChildOfButton = (
             element: HTMLElement | null
         ): boolean => {
             while (element) {
                 if (element.tagName.toLowerCase() === 'button') {
-                    return true // Found a button in the ancestry
+                    return true
                 }
                 element = element.parentElement
             }
             return false
         }
 
-        // Exit early if the original event target or any of its parents is a button
         if (isButtonOrChildOfButton(e.target as HTMLElement)) {
             return
         }
@@ -37,31 +44,26 @@ export const useTimeBlockPlacement = () => {
         const column = e.currentTarget as HTMLElement
         const rect = column.getBoundingClientRect()
         const startY = e.clientY - rect.top - HEADER_HEIGHT
-        const startInterval = Math.floor(startY / INTERVAL_HEIGHT)
+        const startInterval = Math.round(startY / (INTERVAL_HEIGHT / 4))
 
-        setCurrentBlock({ dayIndex, start: startInterval, end: startInterval })
+        setCurrentBlock({
+            id: 'preview',
+            dayIndex,
+            start: startInterval,
+            end: startInterval,
+        })
         setPointOfOrigin(startInterval)
-
-        const currentBlockElement = document.createElement('div')
-        currentBlockElement.className = 'time-block stretching'
-        currentBlockElement.style.top = `${startInterval * INTERVAL_HEIGHT + HEADER_HEIGHT}px`
-        currentBlockElement.style.height = '0px'
-        column.appendChild(currentBlockElement)
-
-        const timeIndicatorElement = document.createElement('div')
-        timeIndicatorElement.className = 'time-indicator'
-        currentBlockElement.appendChild(timeIndicatorElement)
-
-        blockElementRef.current = currentBlockElement
+        setBlockProps({
+            top: startInterval * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
+            height: 0,
+            timeRange: '',
+            direction: null,
+        })
     }
+
     useEffect(() => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
-            if (
-                !currentBlock ||
-                !blockElementRef.current ||
-                pointOfOrigin === null
-            )
-                return
+            if (!currentBlock || pointOfOrigin === null) return
 
             const column = document.querySelectorAll('.day-column')[
                 currentBlock.dayIndex
@@ -70,12 +72,16 @@ export const useTimeBlockPlacement = () => {
 
             const rect = column.getBoundingClientRect()
             const currentY = moveEvent.clientY - rect.top - HEADER_HEIGHT
-            const currentInterval = Math.floor(currentY / INTERVAL_HEIGHT)
+            const adjustedY = Math.max(0, currentY)
+            const currentInterval = Math.floor(
+                adjustedY / (INTERVAL_HEIGHT / 4)
+            )
 
             let start = pointOfOrigin
             let end = pointOfOrigin
 
-            const pixelDifference = currentY - pointOfOrigin * INTERVAL_HEIGHT
+            const pixelDifference =
+                adjustedY - pointOfOrigin * (INTERVAL_HEIGHT / 4)
 
             let direction: 'up' | 'down' = 'down'
             if (pixelDifference >= MOUSE_MOVE_THRESHOLD) {
@@ -85,36 +91,25 @@ export const useTimeBlockPlacement = () => {
                 start = Math.min(currentInterval, pointOfOrigin - 1)
                 direction = 'up'
             }
-
-            const blockElement = blockElementRef.current
-            blockElement.style.top = `${Math.min(start, end) * INTERVAL_HEIGHT + HEADER_HEIGHT}px`
-            blockElement.style.height = `${Math.abs(end - start) * INTERVAL_HEIGHT}px`
-
-            const formatTime = (hour: number) => {
+            const formatTime = (interval: number) => {
+                const totalMinutes = interval * 15
+                const hour = Math.floor(totalMinutes / 60)
+                const minutes = totalMinutes % 60
                 const period = hour >= 12 ? 'PM' : 'AM'
                 const formattedHour = hour % 12 === 0 ? 12 : hour % 12
-                return `${formattedHour}:00${period}`
+                return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
             }
 
             const timeRange = `${formatTime(Math.min(start, end))} - ${formatTime(Math.max(start, end))}`
             setTimeIndicator(timeRange)
-
-            const timeIndicatorElement = blockElement.querySelector(
-                '.time-indicator'
-            ) as HTMLElement
-            if (timeIndicatorElement) {
-                timeIndicatorElement.textContent = timeRange
-                timeIndicatorElement.style.position = 'absolute'
-                timeIndicatorElement.style.left = '50%'
-                timeIndicatorElement.style.transform = 'translateX(-50%)'
-                if (direction !== 'down') {
-                    timeIndicatorElement.style.top = '0'
-                    timeIndicatorElement.style.bottom = 'unset'
-                } else {
-                    timeIndicatorElement.style.bottom = '0'
-                    timeIndicatorElement.style.top = 'unset'
-                }
-            }
+            setBlockProps({
+                top:
+                    Math.min(start, end) * (INTERVAL_HEIGHT / 4) +
+                    HEADER_HEIGHT,
+                height: Math.abs(end - start) * (INTERVAL_HEIGHT / 4),
+                timeRange,
+                direction, // Include direction in blockProps
+            })
 
             setCurrentBlock(prevBlock =>
                 prevBlock
@@ -128,27 +123,18 @@ export const useTimeBlockPlacement = () => {
         }
 
         const handleMouseUp = () => {
-            if (
-                !currentBlock ||
-                !blockElementRef.current ||
-                pointOfOrigin === null
-            )
-                return
+            if (!currentBlock || pointOfOrigin === null) return
 
             const { start, end } = currentBlock
 
-            console.log('Mouse Up Event Detected')
-            console.log('Current Block:', currentBlock)
-            console.log('Start Interval:', start)
-            console.log('End Interval:', end)
-
-            const newBlock = {
+            const newBlock: TimeBlock = {
+                id: uuidv4(), // Generate a unique ID for each block
                 dayIndex: currentBlock.dayIndex,
                 start,
                 end: start === end ? end + 1 : end,
             }
 
-            console.log('New Block to be Added:', newBlock)
+            console.log('Creating new block:', newBlock)
 
             setTimeBlocks(prevBlocks => {
                 const updatedBlocks = {
@@ -158,33 +144,17 @@ export const useTimeBlockPlacement = () => {
                         newBlock,
                     ],
                 }
-                console.log('Updated Time Blocks:', updatedBlocks)
                 return updatedBlocks
             })
 
-            if (blockElementRef.current) {
-                console.log('Removing and Cleaning Up Block Element')
-                blockElementRef.current.classList.remove('stretching')
-                blockElementRef.current.classList.add('bouncing')
-                blockElementRef.current.addEventListener(
-                    'animationend',
-                    () => {
-                        blockElementRef.current?.classList.remove('bouncing')
-                        blockElementRef.current?.remove()
-                        blockElementRef.current = null
-                        console.log('Block Element Removed')
-                    },
-                    { once: true }
-                )
-            }
+            setRecentBlockId(newBlock.id) // Set recent block ID
 
             setCurrentBlock(null)
             setTimeIndicator('')
             setPointOfOrigin(null)
+            setBlockProps(null)
             document.removeEventListener('mousemove', handleMouseMove)
             document.removeEventListener('mouseup', handleMouseUp)
-
-            console.log('Event Listeners Removed. State Reset.')
         }
 
         document.addEventListener('mousemove', handleMouseMove)
@@ -194,7 +164,13 @@ export const useTimeBlockPlacement = () => {
             document.removeEventListener('mousemove', handleMouseMove)
             document.removeEventListener('mouseup', handleMouseUp)
         }
-    }, [currentBlock, pointOfOrigin, setCurrentBlock, setTimeBlocks])
+    }, [
+        currentBlock,
+        pointOfOrigin,
+        setCurrentBlock,
+        setTimeBlocks,
+        setRecentBlockId,
+    ])
 
-    return { handleMouseDown, timeIndicator }
+    return { handleMouseDown, blockProps, timeIndicator }
 }

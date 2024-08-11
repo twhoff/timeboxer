@@ -16,13 +16,15 @@
         "canvas-confetti": "^1.9.3",
         "idb": "^8.0.0",
         "react": "^18.3.1",
-        "react-dom": "^18.3.1"
+        "react-dom": "^18.3.1",
+        "uuid": "^10.0.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.9.0",
         "@types/canvas-confetti": "^1.6.4",
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
+        "@types/uuid": "^10.0.0",
         "@typescript-eslint/eslint-plugin": "^8.0.1",
         "@typescript-eslint/parser": "^8.0.1",
         "eslint": "^9.9.0",

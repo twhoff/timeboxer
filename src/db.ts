@@ -3,10 +3,16 @@ import { openDB, IDBPDatabase, DBSchema } from 'idb'
 const DB_NAME = 'TimeBlockDB'
 const STORE_NAME = 'timeBlocks'
 
+interface TimeBlock {
+    id: string
+    start: number
+    end: number
+}
+
 interface TimeBlockDB extends DBSchema {
     [STORE_NAME]: {
         key: string
-        value: Record<number, Array<{ start: number; end: number }>>
+        value: Record<number, TimeBlock[]>
     }
 }
 
@@ -21,7 +27,7 @@ export async function initDB(): Promise<IDBPDatabase<TimeBlockDB>> {
 }
 
 export async function saveTimeBlocks(
-    timeBlocks: Record<number, Array<{ start: number; end: number }>>
+    timeBlocks: Record<number, TimeBlock[]>
 ): Promise<void> {
     try {
         const db = await initDB()
@@ -33,7 +39,7 @@ export async function saveTimeBlocks(
 
 export async function loadTimeBlocks(): Promise<Record<
     number,
-    Array<{ start: number; end: number }>
+    TimeBlock[]
 > | null> {
     try {
         const db = await initDB()

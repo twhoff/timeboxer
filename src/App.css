@@ -100,8 +100,9 @@ body {
     border-radius: 4px;
     z-index: 1;
     transition:
-        height 0.2s ease-in-out,
-        top 0.2s ease-in-out; /* Ensure top position animates smoothly */
+        height 0.05s ease-out,
+        top 0.05s ease-out, /* Ensure top position animates smoothly */
+        transform 0.2s ease-in-out;
 }
 .time-block.stretching {
     transform: scaleY(1.05) scaleX(0.98);

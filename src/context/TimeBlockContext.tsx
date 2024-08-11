@@ -9,6 +9,7 @@ import React, {
 import { loadTimeBlocks, saveTimeBlocks } from '../db'
 
 export interface TimeBlock {
+    id: string
     dayIndex: number
     start: number
     end: number
@@ -24,6 +25,8 @@ interface TimeBlockContextType {
     currentBlock: TimeBlock | null
     setCurrentBlock: React.Dispatch<React.SetStateAction<TimeBlock | null>>
     clearAllBlocks: () => void
+    recentBlockId: string | null
+    setRecentBlockId: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
@@ -35,7 +38,7 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const [timeBlocks, setTimeBlocks] = useState<TimeBlocks>({})
     const [currentBlock, setCurrentBlock] = useState<TimeBlock | null>(null)
-
+    const [recentBlockId, setRecentBlockId] = useState<string | null>(null)
     useEffect(() => {
         const fetchTimeBlocks = async () => {
             const savedBlocks = await loadTimeBlocks()
@@ -43,22 +46,18 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
                 setTimeBlocks(savedBlocks as TimeBlocks)
             }
         }
-
         fetchTimeBlocks()
     }, [])
-
     useEffect(() => {
         const saveBlocks = async () => {
             await saveTimeBlocks(timeBlocks)
         }
-
         saveBlocks()
     }, [timeBlocks])
-
     const clearAllBlocks = useCallback(() => {
         setTimeBlocks({})
+        setRecentBlockId(null)
     }, [])
-
     const value = useMemo(
         () => ({
             timeBlocks,
@@ -66,10 +65,11 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             currentBlock,
             setCurrentBlock,
             clearAllBlocks,
+            recentBlockId,
+            setRecentBlockId,
         }),
-        [timeBlocks, currentBlock, clearAllBlocks]
+        [timeBlocks, currentBlock, clearAllBlocks, recentBlockId]
     )
-
     return (
         <TimeBlockContext.Provider value={value}>
             {children}
