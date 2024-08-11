@@ -10,5 +10,6 @@
         "typescriptreact"
     ],
     "prettier.requireConfig": true, // Only use Prettier when a config file is present
-    "eslint.alwaysShowStatus": true // Show ESLint status in the status bar
+    "eslint.alwaysShowStatus": true,
+    "cSpell.words": ["ADHD"] // Show ESLint status in the status bar
 }

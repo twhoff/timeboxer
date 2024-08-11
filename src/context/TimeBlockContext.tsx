@@ -24,6 +24,8 @@ export interface Schedule {
     id: string
     name: string
     isActive: boolean
+    color: string
+    bgColor: string
 }
 
 export interface TimeBlocks {
@@ -40,6 +42,8 @@ interface TimeBlockContextType {
     setRecentBlockId: React.Dispatch<React.SetStateAction<string | null>>
     schedules: Schedule[]
     setSchedules: React.Dispatch<React.SetStateAction<Schedule[]>>
+    selectedSchedule: string | null
+    setSelectedSchedule: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 export const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
@@ -53,6 +57,9 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     const [currentBlock, setCurrentBlock] = useState<TimeBlock | null>(null)
     const [recentBlockId, setRecentBlockId] = useState<string | null>(null)
     const [schedules, setSchedules] = useState<Schedule[]>([])
+    const [selectedSchedule, setSelectedSchedule] = useState<string | null>(
+        null
+    )
 
     useEffect(() => {
         const fetchTimeBlocks = async () => {
@@ -102,8 +109,17 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             setRecentBlockId,
             schedules,
             setSchedules,
+            selectedSchedule,
+            setSelectedSchedule,
         }),
-        [timeBlocks, currentBlock, clearAllBlocks, recentBlockId, schedules]
+        [
+            timeBlocks,
+            currentBlock,
+            clearAllBlocks,
+            recentBlockId,
+            schedules,
+            selectedSchedule,
+        ]
     )
 
     return (

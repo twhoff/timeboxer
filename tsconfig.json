@@ -3,7 +3,8 @@
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "esModuleInterop": true,
-        "target": "es6",
+        "target": "ES2016",
+        "lib": ["dom", "es2016"],
         "module": "commonjs",
         "jsx": "react-jsx", // Use new JSX transform
         "forceConsistentCasingInFileNames": true,
