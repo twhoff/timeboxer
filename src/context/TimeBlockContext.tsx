@@ -42,6 +42,13 @@ interface TimeBlockContextType {
     setSchedules: React.Dispatch<React.SetStateAction<Schedule[]>>
     selectedSchedule: string | null
     setSelectedSchedule: React.Dispatch<React.SetStateAction<string | null>>
+    updateBlockPosition: (
+        scheduleId: string,
+        blockId: string,
+        newDayIndex: number,
+        newStart: number,
+        newEnd: number
+    ) => void
 }
 
 export const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
@@ -66,10 +73,8 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             const loadedSchedules = await loadSchedules()
             setSchedules(loadedSchedules)
 
-            // Initially set selectedSchedule to null
             setSelectedSchedule(null)
 
-            // Load time blocks for all active schedules
             loadedSchedules.forEach(schedule => {
                 if (schedule.isActive) {
                     loadTimeBlocks(schedule.id).then(loadedTimeBlocks => {
@@ -92,7 +97,6 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     }, [schedules])
 
     useEffect(() => {
-        // Listen for changes in schedules to load time blocks for newly active schedules
         schedules.forEach(schedule => {
             if (schedule.isActive && !(schedule.id in timeBlocks)) {
                 loadTimeBlocks(schedule.id).then(loadedTimeBlocks => {
@@ -127,6 +131,38 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, [selectedSchedule])
 
+    const updateBlockPosition = useCallback(
+        (
+            scheduleId: string,
+            blockId: string,
+            newDayIndex: number,
+            newStart: number,
+            newEnd: number
+        ) => {
+            setTimeBlocks(prevBlocks => {
+                const updatedBlocks = { ...prevBlocks }
+                const scheduleBlocks = updatedBlocks[scheduleId] || []
+                const blockIndex = scheduleBlocks.findIndex(
+                    block => block.id === blockId
+                )
+                if (blockIndex !== -1) {
+                    const updatedBlock = {
+                        ...scheduleBlocks[blockIndex],
+                        dayIndex: newDayIndex,
+                        start: newStart,
+                        end: newEnd,
+                    }
+                    scheduleBlocks[blockIndex] = updatedBlock
+                }
+                return {
+                    ...updatedBlocks,
+                    [scheduleId]: scheduleBlocks,
+                }
+            })
+        },
+        []
+    )
+
     const value = useMemo(
         () => ({
             timeBlocks,
@@ -140,6 +176,7 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             setSchedules,
             selectedSchedule,
             setSelectedSchedule,
+            updateBlockPosition,
         }),
         [
             timeBlocks,
@@ -148,6 +185,7 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             recentBlockId,
             schedules,
             selectedSchedule,
+            updateBlockPosition,
         ]
     )
 

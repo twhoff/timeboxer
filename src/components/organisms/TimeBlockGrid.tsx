@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
 import { TimeBlock } from '../molecules/TimeBlock'
 import { IntervalLine } from '../atoms/IntervalLine'
@@ -31,6 +31,7 @@ export const TimeBlockGrid: React.FC = () => {
     const triggerConfetti = useConfetti()
     const [activeDay, setActiveDay] = useState<number | null>(null)
     const [bouncingBlockId, setBouncingBlockId] = useState<string | null>(null)
+    const gridRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (recentBlockId) {
@@ -59,7 +60,6 @@ export const TimeBlockGrid: React.FC = () => {
         setTimeBlocks(prevBlocks => {
             const updatedBlocks = { ...prevBlocks }
 
-            // Iterate over all schedules to remove the block
             Object.keys(updatedBlocks).forEach(scheduleId => {
                 updatedBlocks[scheduleId] = updatedBlocks[scheduleId].filter(
                     block => block.id !== blockId
@@ -74,8 +74,20 @@ export const TimeBlockGrid: React.FC = () => {
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
+        const target = e.target as HTMLElement
+        const isCmdClick = e.metaKey // Check if the command key is pressed
+        // Handle cmd+click separately
+        if (isCmdClick && target.closest('.time-block')) {
+            console.log('Cmd+click on time block, initiating drag operation')
+            handleMouseDown(dayIndex, e) // Allow cmd+click to initiate drag
+            return
+        }
+        // For regular clicks, check if the click is on a time block
+        if (target.closest('.time-block')) {
+            console.log('Regular click on a time block, exiting handler')
+            return // Exit if clicking on an existing time block
+        }
         console.log(`Mouse down on day column: ${daysOfWeek[dayIndex]}`)
-        // Check if the event target is a button or its child
         const isButtonOrChild = (element: HTMLElement | null): boolean => {
             while (element) {
                 if (element.tagName.toLowerCase() === 'button') {
@@ -90,7 +102,7 @@ export const TimeBlockGrid: React.FC = () => {
             console.log(
                 'Click event originated from a button or its child; stopping propagation.'
             )
-            e.stopPropagation() // Stop propagation if it's from a button
+            e.stopPropagation()
             return
         }
         if (!selectedSchedule) {
@@ -104,7 +116,6 @@ export const TimeBlockGrid: React.FC = () => {
         setActiveDay(dayIndex)
         handleMouseDown(dayIndex, e)
     }
-
     const getScheduleDetails = (id: string | null) => {
         return schedules.find(schedule => schedule.id === id)
     }
@@ -126,7 +137,8 @@ export const TimeBlockGrid: React.FC = () => {
                     <div key={block.id}>
                         {block.id !== null && (
                             <TimeBlock
-                                scheduleId={scheduleId} // Pass scheduleId to TimeBlock
+                                blockId={block.id}
+                                scheduleId={scheduleId}
                                 className={
                                     block.id === bouncingBlockId
                                         ? 'bouncing'
@@ -155,7 +167,7 @@ export const TimeBlockGrid: React.FC = () => {
     }
 
     return (
-        <div className="container">
+        <div className="container" ref={gridRef}>
             {daysOfWeek.map((day, dayIndex) => (
                 <div
                     key={dayIndex}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTimeBlockContext } from '../context/TimeBlockContext'
 import { v4 as uuidv4 } from 'uuid'
 import type { TimeBlock } from '../context/TimeBlockContext'
@@ -14,6 +14,7 @@ export const useTimeBlockPlacement = () => {
         setTimeBlocks,
         setRecentBlockId,
         selectedSchedule,
+        timeBlocks,
     } = useTimeBlockContext()
     const [timeIndicator, setTimeIndicator] = useState<string>('')
     const [pointOfOrigin, setPointOfOrigin] = useState<number | null>(null)
@@ -23,67 +24,145 @@ export const useTimeBlockPlacement = () => {
         timeRange: string
         direction: 'up' | 'down' | null
     } | null>(null)
+    const isDraggingRef = useRef<boolean>(false)
+    const currentDayIndexRef = useRef<number | null>(null)
+    const processedDayIndices = useRef<Set<number>>(new Set())
+
+    useEffect(() => {
+        const dayColumns = Array.from(document.querySelectorAll('.day-column'))
+
+        const handleMouseEnter = (index: number) => {
+            currentDayIndexRef.current = index
+        }
+
+        const handleMouseLeave = () => {
+            currentDayIndexRef.current = null
+        }
+
+        dayColumns.forEach((column, index) => {
+            column.addEventListener('mouseenter', () => handleMouseEnter(index))
+            column.addEventListener('mouseleave', handleMouseLeave)
+        })
+
+        return () => {
+            dayColumns.forEach(column => {
+                column.removeEventListener('mouseenter', handleMouseEnter)
+                column.removeEventListener('mouseleave', handleMouseLeave)
+            })
+        }
+    }, [])
 
     const handleMouseDown = (
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
-        console.log('Mouse down event detected')
+        e.preventDefault()
 
-        // More precise check for the delete button or its descendants
-        const isDeleteButtonOrChild = (
-            element: HTMLElement | null
-        ): boolean => {
-            while (element) {
-                if (
-                    element.tagName.toLowerCase() === 'button' &&
-                    element.classList.contains('bin-icon')
-                ) {
-                    return true
-                }
-                element = element.parentElement
-            }
-            return false
-        }
+        if (e.metaKey && selectedSchedule) {
+            const column = e.currentTarget as HTMLElement
+            const rect = column.getBoundingClientRect()
+            const clickY = e.clientY - rect.top - HEADER_HEIGHT
+            const clickInterval = Math.floor(clickY / (INTERVAL_HEIGHT / 4))
 
-        if (isDeleteButtonOrChild(e.target as HTMLElement)) {
-            console.log(
-                'Clicked on delete button or child, exiting handleMouseDown'
+            const originalBlock = timeBlocks[selectedSchedule]?.find(
+                (block: TimeBlock) =>
+                    block.dayIndex === dayIndex &&
+                    block.start <= clickInterval &&
+                    block.end > clickInterval
             )
-            return
+
+            if (originalBlock) {
+                isDraggingRef.current = true
+                processedDayIndices.current.clear()
+
+                const handleDragMouseMove = () => {
+                    if (!isDraggingRef.current) return
+
+                    const targetDayIndex = currentDayIndexRef.current
+
+                    if (
+                        targetDayIndex !== null &&
+                        targetDayIndex !== originalBlock.dayIndex &&
+                        !processedDayIndices.current.has(targetDayIndex)
+                    ) {
+                        const newBlock: TimeBlock = {
+                            ...originalBlock,
+                            id: uuidv4(),
+                            dayIndex: targetDayIndex,
+                        }
+
+                        setTimeBlocks(prevBlocks => ({
+                            ...prevBlocks,
+                            [selectedSchedule]: [
+                                ...(prevBlocks[selectedSchedule] || []),
+                                newBlock,
+                            ],
+                        }))
+
+                        setRecentBlockId(newBlock.id)
+                        processedDayIndices.current.add(targetDayIndex)
+                    }
+                }
+
+                const handleDragMouseUp = () => {
+                    isDraggingRef.current = false
+                    processedDayIndices.current.clear()
+                    document.removeEventListener(
+                        'mousemove',
+                        handleDragMouseMove
+                    )
+                    document.removeEventListener('mouseup', handleDragMouseUp)
+                }
+
+                document.addEventListener('mousemove', handleDragMouseMove)
+                document.addEventListener('mouseup', handleDragMouseUp)
+            }
         } else {
-            console.log('Click is not on delete button or child')
+            const isDeleteButtonOrChild = (
+                element: HTMLElement | null
+            ): boolean => {
+                while (element) {
+                    if (
+                        element.tagName.toLowerCase() === 'button' &&
+                        element.classList.contains('bin-icon')
+                    ) {
+                        return true
+                    }
+                    element = element.parentElement
+                }
+                return false
+            }
+
+            if (isDeleteButtonOrChild(e.target as HTMLElement)) {
+                return
+            }
+
+            if (!selectedSchedule) {
+                alert('Please select a schedule before adding time blocks.')
+                return
+            }
+
+            const column = e.currentTarget as HTMLElement
+            const rect = column.getBoundingClientRect()
+            const startY = e.clientY - rect.top - HEADER_HEIGHT
+            const startInterval = Math.round(startY / (INTERVAL_HEIGHT / 4))
+
+            setCurrentBlock({
+                id: 'preview',
+                dayIndex,
+                start: startInterval,
+                end: startInterval,
+            })
+            setPointOfOrigin(startInterval)
+            setBlockProps({
+                top: startInterval * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
+                height: 0,
+                timeRange: '',
+                direction: null,
+            })
         }
-
-        if (!selectedSchedule) {
-            console.log('No schedule selected, showing alert')
-            alert('Please select a schedule before adding time blocks.')
-            return
-        } else {
-            console.log('Schedule is selected, proceeding with handleMouseDown')
-        }
-
-        const column = e.currentTarget as HTMLElement
-        const rect = column.getBoundingClientRect()
-        const startY = e.clientY - rect.top - HEADER_HEIGHT
-        const startInterval = Math.round(startY / (INTERVAL_HEIGHT / 4))
-
-        console.log('Setting current block with startInterval:', startInterval)
-
-        setCurrentBlock({
-            id: 'preview',
-            dayIndex,
-            start: startInterval,
-            end: startInterval,
-        })
-        setPointOfOrigin(startInterval)
-        setBlockProps({
-            top: startInterval * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
-            height: 0,
-            timeRange: '',
-            direction: null,
-        })
     }
+
     useEffect(() => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
             if (!currentBlock || pointOfOrigin === null) return
@@ -124,7 +203,9 @@ export const useTimeBlockPlacement = () => {
                 return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
             }
 
-            const timeRange = `${formatTime(Math.min(start, end))} - ${formatTime(Math.max(start, end))}`
+            const timeRange = `${formatTime(
+                Math.min(start, end)
+            )} - ${formatTime(Math.max(start, end))}`
             setTimeIndicator(timeRange)
             setBlockProps({
                 top:
@@ -158,8 +239,6 @@ export const useTimeBlockPlacement = () => {
                 start,
                 end: start === end ? end + 1 : end,
             }
-
-            console.log('Creating new block:', newBlock)
 
             setTimeBlocks(prevBlocks => ({
                 ...prevBlocks,
