@@ -31,7 +31,7 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
     zIndex = 1,
     scheduleId,
 }) => {
-    const { selectedSchedule } = useTimeBlockContext()
+    const { selectedSchedule, setSelectedSchedule } = useTimeBlockContext()
     const [isUnlocked, setIsUnlocked] = useState(false)
 
     // Determine border color based on selection status
@@ -39,6 +39,7 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
 
     const handleLockClick = () => {
         setIsUnlocked(true)
+        setSelectedSchedule(scheduleId) // Update the selected schedule to the current scheduleId
     }
 
     return (
