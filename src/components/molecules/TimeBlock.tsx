@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
 
 interface TimeBlockProps {
@@ -32,9 +32,14 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
     scheduleId,
 }) => {
     const { selectedSchedule } = useTimeBlockContext()
+    const [isUnlocked, setIsUnlocked] = useState(false)
 
     // Determine border color based on selection status
     const borderColor = scheduleId === selectedSchedule ? color : bgColor
+
+    const handleLockClick = () => {
+        setIsUnlocked(true)
+    }
 
     return (
         <div
@@ -49,8 +54,46 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                 borderStyle: 'solid', // Ensure border style is solid
                 zIndex, // Apply z-index
                 position: 'absolute', // Ensure z-index is effective
+                overflow: 'hidden', // Ensure child elements are contained
             }}
         >
+            {/* Conditionally render the padlock icon */}
+            {scheduleId !== selectedSchedule && (
+                <div
+                    className={`padlock-icon ${isUnlocked ? 'unlocked' : ''}`}
+                    onClick={handleLockClick}
+                    style={{
+                        position: 'absolute',
+                        top: '4px',
+                        left: '4px',
+                        color,
+                    }}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 70 70"
+                        width="18"
+                        height="18"
+                        fill="currentColor"
+                    >
+                        <rect
+                            x="22"
+                            y="30"
+                            width="26"
+                            height="26"
+                            rx="2"
+                            ry="2"
+                        />
+                        <path
+                            className="padlock-latch"
+                            d="M27 40 V20 C30 14, 40 14, 43 20 V30"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        />
+                    </svg>
+                </div>
+            )}
             <button
                 className="bin-icon"
                 onClick={e => {

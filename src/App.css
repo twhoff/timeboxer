@@ -293,6 +293,31 @@ label {
         border-color 0.3s ease-in-out; /* Include border-color transition */
 }
 
+.time-block .padlock-icon {
+    display: relative;
+    opacity: 0; /* Default opacity */
+    transition: opacity 0.3s ease; /* Smooth transition for fade in/out */
+}
+.time-block:hover .padlock-icon {
+    opacity: 1; /* Fade in on hover */
+}
+.time-block .padlock-icon.unlocked .padlock-latch {
+    animation: openLatch 0.5s forwards; /* Trigger animation */
+}
+@keyframes openLatch {
+    0% {
+        transform: translateY(0) rotateY(0deg);
+        transform-origin: 27px 40px; /* Fixed hinge point at the start of the path */
+    }
+    40% {
+        transform: translateY(-8px) rotateY(0deg); /* Lifting up */
+        transform-origin: 27px 40px;
+    }
+    100% {
+        transform: translateY(-8px) rotateY(-180deg); /* Swinging open */
+        transform-origin: 27px 40px;
+    }
+}
 .time-block.stretching {
     transform: scaleY(1.05) scaleX(0.98);
 }
