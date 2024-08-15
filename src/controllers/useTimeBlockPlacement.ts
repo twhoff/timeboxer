@@ -30,23 +30,19 @@ export const useTimeBlockPlacement = () => {
 
     useEffect(() => {
         const dayColumns = Array.from(document.querySelectorAll('.day-column'))
-
         const handleMouseEnter = (index: number) => {
             currentDayIndexRef.current = index
         }
-
         const handleMouseLeave = () => {
             currentDayIndexRef.current = null
         }
-
         dayColumns.forEach((column, index) => {
             column.addEventListener('mouseenter', () => handleMouseEnter(index))
             column.addEventListener('mouseleave', handleMouseLeave)
         })
-
         return () => {
             dayColumns.forEach(column => {
-                column.removeEventListener('mouseenter', handleMouseEnter)
+                column.removeEventListener('mouseenter', () => handleMouseEnter)
                 column.removeEventListener('mouseleave', handleMouseLeave)
             })
         }
@@ -74,6 +70,12 @@ export const useTimeBlockPlacement = () => {
             if (originalBlock) {
                 isDraggingRef.current = true
                 processedDayIndices.current.clear()
+
+                const timeBlockElements =
+                    document.querySelectorAll('.time-block')
+                timeBlockElements.forEach(element => {
+                    element.classList.add('dragging')
+                })
 
                 const handleDragMouseMove = () => {
                     if (!isDraggingRef.current) return
@@ -228,6 +230,14 @@ export const useTimeBlockPlacement = () => {
         }
 
         const handleMouseUp = () => {
+            if (isDraggingRef.current) {
+                const timeBlockElements =
+                    document.querySelectorAll('.time-block')
+                timeBlockElements.forEach(element => {
+                    element.classList.remove('dragging')
+                })
+            }
+
             if (!currentBlock || pointOfOrigin === null || !selectedSchedule)
                 return
 

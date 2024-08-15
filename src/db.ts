@@ -4,13 +4,16 @@ const TIME_BLOCK_STORE = 'timeBlocks'
 const SCHEDULE_STORE = 'schedules'
 const ROTATOR_STORE = 'colorGeneratorRotatorValueStore'
 const ROTATOR_KEY = 'colorGeneratorRotatorValue'
-interface TimeBlock {
+export interface TimeBlock {
     id: string
+    scheduleId: string
     dayIndex: number
     start: number
     end: number
+    color: string
 }
-interface Schedule {
+
+export interface Schedule {
     id: string
     name: string
     isActive: boolean

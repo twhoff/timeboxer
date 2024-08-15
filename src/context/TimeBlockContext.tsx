@@ -11,22 +11,9 @@ import {
     saveTimeBlocks,
     loadSchedules,
     saveSchedules,
+    type TimeBlock,
+    type Schedule,
 } from '../db'
-
-export interface TimeBlock {
-    id: string
-    dayIndex: number
-    start: number
-    end: number
-}
-
-export interface Schedule {
-    id: string
-    name: string
-    isActive: boolean
-    color: string
-    bgColor: string
-}
 
 interface TimeBlockContextType {
     timeBlocks: Record<string, TimeBlock[]>
@@ -72,17 +59,17 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         const fetchSchedules = async () => {
             const loadedSchedules = await loadSchedules()
             setSchedules(loadedSchedules)
-
             setSelectedSchedule(null)
-
             loadedSchedules.forEach(schedule => {
                 if (schedule.isActive) {
-                    loadTimeBlocks(schedule.id).then(loadedTimeBlocks => {
-                        setTimeBlocks(prevBlocks => ({
-                            ...prevBlocks,
-                            [schedule.id]: loadedTimeBlocks,
-                        }))
-                    })
+                    loadTimeBlocks(schedule.id).then(
+                        (loadedTimeBlocks: TimeBlock[]) => {
+                            setTimeBlocks(prevBlocks => ({
+                                ...prevBlocks,
+                                [schedule.id]: loadedTimeBlocks,
+                            }))
+                        }
+                    )
                 }
             })
         }

@@ -8,10 +8,10 @@ interface UsedColor {
     l: number
 }
 
-const GOLDEN_ANGLE = 137.5 // Golden angle in degrees
-const MAX_HUE = 360 // Maximum hue value
+export const GOLDEN_ANGLE = 137.5 // Golden angle in degrees
+export const MAX_HUE = 360 // Maximum hue value
 
-function generateAtlassianStyleColor(hue: number): {
+export function generateAtlassianStyleColor(hue: number): {
     accentColor: string
     backgroundColor: string
 } {
@@ -37,12 +37,14 @@ async function getNextHue(): Promise<number> {
     return nextHue
 }
 
-export async function generateADHDFriendlyColors(): Promise<{
+export async function generateADHDFriendlyColors(
+    inputHue: number | null = null
+): Promise<{
     color: string
     bgColor: string
 }> {
-    const minHueDistance = 60
-    const minColorDifference = 100 // Adjust this value for stricter uniqueness
+    const minHueDistance = 100
+    const minColorDifference = 100
 
     const usedColors: UsedColor[] = await loadUsedColors()
 
@@ -51,7 +53,7 @@ export async function generateADHDFriendlyColors(): Promise<{
     let isUnique = false
 
     while (!isUnique) {
-        const hue = await getNextHue()
+        const hue = inputHue || (await getNextHue())
         const {
             accentColor: newAccentColor,
             backgroundColor: newBackgroundColor,
@@ -77,7 +79,7 @@ export async function generateADHDFriendlyColors(): Promise<{
     return { color: accentColor, bgColor: backgroundColor }
 }
 
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
     l /= 100
     const a = (s * Math.min(l, 1 - l)) / 100
     const f = (n: number) => {
@@ -117,8 +119,8 @@ function hexToHSL(hex: string): UsedColor {
     const max = Math.max(r, g, b),
         min = Math.min(r, g, b)
     let h = 0,
-        s = 0,
-        l = (max + min) / 2
+        s = 0
+    const l = (max + min) / 2
     if (max !== min) {
         const d = max - min
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min)

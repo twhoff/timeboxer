@@ -1,9 +1,15 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useState, useContext, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { TimeBlockContext } from '../../context/TimeBlockContext'
-import { generateADHDFriendlyColors } from '../../utils/colorGenerator'
+import {
+    generateADHDFriendlyColors,
+    GOLDEN_ANGLE,
+    MAX_HUE,
+} from '../../utils/colorGenerator'
 
 const Sidebar: React.FC = () => {
+    const COLOR_SEGMENTS = 10
+
     const {
         schedules,
         setSchedules,
@@ -23,6 +29,13 @@ const Sidebar: React.FC = () => {
         id: string
         name: string
     } | null>(null)
+    const [clickedSquare, setClickedSquare] = useState<string | null>(null)
+    const [currentHue, setCurrentHue] = useState<number>(0)
+    const [currentColors, setCurrentColors] = useState<{
+        newColor: string
+        newBgColor: string
+    }>({ newColor: '', newBgColor: '' })
+    const colorSquareRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
         document.documentElement.style.setProperty(
@@ -64,7 +77,7 @@ const Sidebar: React.FC = () => {
         )
     }
 
-    const toggleSelectedSchedule = (id: string) => {
+    const toggleSelectedSchedule = (id: string | null) => {
         if (selectedSchedule === id) {
             setSelectedSchedule(null)
         } else {
@@ -101,6 +114,108 @@ const Sidebar: React.FC = () => {
         setConfirmDelete(null)
     }
 
+    const handleMouseMove = async (
+        e: React.MouseEvent,
+        id: string,
+        originalColor: string
+    ) => {
+        if (clickedSquare !== id) return
+        const rect = (e.target as HTMLElement).getBoundingClientRect()
+        const x = e.clientX - rect.left - 5
+        const segmentWidth = rect.width / COLOR_SEGMENTS
+        const segmentIndex = Math.floor(x / segmentWidth)
+        if (segmentIndex < 0 || segmentIndex > COLOR_SEGMENTS - 1) {
+            setCurrentColors({ newColor: originalColor, newBgColor: '' })
+            return
+        }
+        console.log(segmentIndex)
+        const rotatorValue = GOLDEN_ANGLE * (segmentIndex + 1)
+        const currentHue = rotatorValue % MAX_HUE
+        const colors = await generateADHDFriendlyColors(currentHue)
+        setCurrentHue(currentHue)
+        const { color, bgColor } = colors
+        setCurrentColors({ newColor: color, newBgColor: bgColor })
+    }
+
+    const handleSquareClick = async (
+        scheduleId: string,
+        scheduleColor: string
+    ) => {
+        if (selectedSchedule === scheduleId) {
+            // If the schedule is selected, unselect it
+            toggleSelectedSchedule(null)
+            return
+        }
+        if (clickedSquare) {
+            const { color, bgColor } =
+                await generateADHDFriendlyColors(currentHue)
+            setSchedules(
+                schedules.map(schedule =>
+                    schedule.id === scheduleId
+                        ? { ...schedule, color, bgColor }
+                        : schedule
+                )
+            )
+            setClickedSquare(null)
+            setTimeBlocks(prevBlocks => {
+                const updatedBlocks = { ...prevBlocks }
+                Object.keys(updatedBlocks).forEach(key => {
+                    updatedBlocks[key].forEach(block => {
+                        if (block.scheduleId === scheduleId) {
+                            block.color = color
+                        }
+                    })
+                })
+                return updatedBlocks
+            })
+        } else {
+            setCurrentColors({ newColor: scheduleColor, newBgColor: '' })
+            setClickedSquare(scheduleId)
+        }
+    }
+
+    const generateSegmentedGradient = async (): Promise<string> => {
+        const colors = []
+        let rotatorValue = GOLDEN_ANGLE
+        for (let i = 0; i < COLOR_SEGMENTS; i++) {
+            const currentHue = rotatorValue % MAX_HUE // Increment using golden angle
+            const { bgColor } = await generateADHDFriendlyColors(currentHue)
+            colors.push(bgColor)
+            rotatorValue += GOLDEN_ANGLE
+        }
+        const colorStops = colors.map((color, i, arr) => {
+            const percentage = (i / (arr.length - 1)) * 100
+            return `${color} ${percentage}%, ${color} ${percentage + 8.33}%`
+        })
+        return `linear-gradient(to right, ${colorStops.join(', ')})`
+    }
+
+    const [gradient, setGradient] = useState<string>('')
+
+    useEffect(() => {
+        generateSegmentedGradient().then(setGradient)
+    }, [])
+
+    const handleClickOutside = (event: MouseEvent) => {
+        if (
+            colorSquareRef.current &&
+            !colorSquareRef.current.contains(event.target as Node)
+        ) {
+            setClickedSquare(null)
+        }
+    }
+
+    useEffect(() => {
+        if (clickedSquare) {
+            document.addEventListener('mousedown', handleClickOutside)
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [clickedSquare])
+
     return (
         <div className="sidebar" onClick={() => setContextMenu(null)}>
             <h2>Schedules</h2>
@@ -134,15 +249,44 @@ const Sidebar: React.FC = () => {
                             onClick={e => e.stopPropagation()}
                         />
                         <div
-                            className="color-square"
+                            ref={
+                                clickedSquare === schedule.id
+                                    ? colorSquareRef
+                                    : null
+                            }
+                            className={`color-square ${
+                                clickedSquare === schedule.id ? 'expanded' : ''
+                            }`}
                             style={{
-                                backgroundColor:
-                                    selectedSchedule === schedule.id
-                                        ? schedule.bgColor
-                                        : schedule.color,
+                                background:
+                                    selectedSchedule !== schedule.id &&
+                                    clickedSquare === schedule.id
+                                        ? gradient
+                                        : selectedSchedule === schedule.id
+                                          ? schedule.bgColor
+                                          : schedule.color,
+                                border: `5px solid ${
+                                    clickedSquare === schedule.id
+                                        ? currentColors.newColor
+                                        : 'transparent'
+                                }`,
                             }}
+                            onClick={e => {
+                                e.stopPropagation()
+                                handleSquareClick(schedule.id, schedule.color)
+                            }}
+                            onMouseMove={e =>
+                                handleMouseMove(e, schedule.id, schedule.color)
+                            }
+                            onMouseLeave={() =>
+                                setCurrentColors({
+                                    newColor: schedule.color,
+                                    newBgColor: '',
+                                })
+                            }
                         />
                         <button
+                            onClick={() => toggleSelectedSchedule(schedule.id)}
                             style={{
                                 border: 'none',
                                 background: 'none',
@@ -156,6 +300,7 @@ const Sidebar: React.FC = () => {
                                         : 'inherit',
                                 zIndex:
                                     selectedSchedule === schedule.id ? 1 : 0,
+                                transition: 'color 0.1s ease-in-out',
                             }}
                         >
                             {schedule.name}
@@ -208,7 +353,7 @@ const Sidebar: React.FC = () => {
                             viewBox="0 0 64 64"
                             width="16"
                             height="16"
-                            fill="#555" /* Darker grey for the icon */
+                            fill="#555"
                         >
                             <rect
                                 x="16"
@@ -236,8 +381,8 @@ const Sidebar: React.FC = () => {
             {confirmDelete && (
                 <div className="confirmation-dialog">
                     <p>
-                        Are you sure you wish to delete the schedule "
-                        {confirmDelete.name}"?
+                        Are you sure you wish to delete the schedule &quot;
+                        {confirmDelete.name}&quot;?
                     </p>
                     <button
                         onClick={() => confirmDeleteSchedule(confirmDelete.id)}

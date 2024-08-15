@@ -45,12 +45,11 @@ body {
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     padding: 1rem;
     padding-top: 0;
-
 }
 
 .toggle-all-container {
-    margin-bottom: 0.5rem; /* Space between the button and the list */
-    height: 1.5rem; /* Set a fixed height to prevent layout shift */
+    margin-bottom: 0.5rem;
+    height: 1.5rem;
     text-align: right;
 }
 .toggle-all {
@@ -61,7 +60,6 @@ body {
     cursor: pointer;
     opacity: var(--show-button-opacity, 0);
     transition: opacity 0.3s ease-in-out;
-    pointer-events: var(--show-button-opacity) == 0 ? 'none' : 'auto';
 }
 .toggle-all:hover {
     color: var(--hover-color);
@@ -69,14 +67,14 @@ body {
 
 .context-menu {
     position: absolute;
-    background-color: #f0f0f0; /* Grey background */
+    background-color: #f0f0f0;
     border: 1px solid #ccc;
     z-index: 100;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 0.5rem;
-    border-radius: 8px; /* Rounded corners */
-    transform-origin: top left; /* Animate from the top-left corner */
-    animation: expandFromPoint 100ms forwards; /* Expand from a single point */
+    border-radius: 8px;
+    transform-origin: top left;
+    animation: expandFromPoint 100ms forwards;
 }
 @keyframes expandFromPoint {
     0% {
@@ -91,23 +89,23 @@ body {
 .context-menu button {
     background: none;
     border: none;
-    color: #555; /* Darker grey for the text */
+    color: #555;
     cursor: pointer;
     display: flex;
     align-items: center;
     padding: 0.25rem 0;
-    gap: 8px; /* Space between icon and text */
+    gap: 8px;
 }
 .context-menu button:hover {
-    background-color: #e0e0e0; /* Slightly darker grey on hover */
+    background-color: #e0e0e0;
     border-radius: 4px;
 }
 .context-menu .bin-lid {
-    transform-origin: 50px 18px; /* Set origin to the right edge of the lid */
+    transform-origin: 50px 18px;
     transition: transform 0.3s ease;
 }
 .context-menu button:hover .bin-lid {
-    transform: rotate(30deg); /* Rotate the lid to 'open' it from the right */
+    transform: rotate(30deg);
 }
 .confirmation-dialog {
     position: fixed;
@@ -141,22 +139,40 @@ li {
     align-items: center;
     margin-bottom: 0.5rem;
     position: relative;
-    transition: color 0.3s, background-color 0.3s;
+    transition:
+        color 0.3s,
+        background-color 0.3s;
     padding: 0.5rem;
     cursor: pointer;
     border-radius: 4px;
-    overflow: hidden;
 }
 
 .color-square {
     width: 16px;
     height: 16px;
-    transition: width 0.3s ease, height 0.3s ease, left 0.3s ease, background-color 0.3s ease;
+    transition:
+        width 0.3s ease,
+        height 0.3s ease,
+        background-color 0.3s ease,
+        border-radius 0.3s ease,
+        transform 0.3s ease,
+        border-color 0.1s ease;
     border-radius: 4px;
     margin-left: auto;
-    z-index: 0;
+    z-index: 1;
     position: absolute;
     right: 0;
+    transform-origin: center;
+}
+
+.color-square.expanded {
+    width: 100px;
+    height: 100px;
+    border-radius: 50px;
+    z-index: 9999;
+    position: absolute;
+    right: 0;
+    transform: translateX(42px);
 }
 
 .schedule-item.selected .color-square {
@@ -169,9 +185,9 @@ li {
     color: white;
 }
 
-input[type="checkbox"] {
+input[type='checkbox'] {
     margin-right: 0.5rem;
-    z-index: 1;
+    z-index: 10;
 }
 
 button {
@@ -283,49 +299,121 @@ label {
     left: 0;
     right: 0;
     background-color: rgba(0, 123, 255, 0.7);
-    border: 1px solid transparent; /* Default border color for transition */
+    border: 1px solid transparent;
     border-radius: 4px;
     z-index: 1;
+    transform: scale(1) translate(0, 0);
     transition:
         height 0.05s ease-out,
         top 0.05s ease-out,
         transform 0.2s ease-in-out,
-        border-color 0.3s ease-in-out; /* Include border-color transition */
+        width 0.2s ease-in-out,
+        border-color 0.3s ease-in-out,
+        background-color 0.3s ease,
+        min-height 0.1s ease-in-out;
+    min-height: 0px;
+    width: 100%;
+    height: 100%;
 }
 
-.time-block .padlock-icon {
-    display: relative;
-    opacity: 0; /* Default opacity */
-    transition: opacity 0.3s ease; /* Smooth transition for fade in/out */
+.time-block:hover {
+    /* Increase width and height by a fixed amount */
+    width: calc(100% + 4px); /* Add fixed pixels to width */
+    /* Optional: Center the pop effect around the original position */
+    transform: translate(-2px, -2px);
+    z-index: 9999 !important;
 }
-.time-block:hover .padlock-icon {
-    opacity: 1; /* Fade in on hover */
+
+.time-block:hover,
+.time-block.dragging {
+    min-height: 24px;
 }
+
+.padlock-icon,
+.bin-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease-in-out,
+        color 0.2s ease-in-out;
+    opacity: 0;
+}
+.time-block:hover .padlock-icon,
+.time-block:hover .bin-icon {
+    opacity: 1;
+}
+.padlock-icon.unlocked {
+    cursor: auto;
+}
+.padlock-icon.hidden {
+    animation: hideLock 0s forwards;
+}
+.padlock-icon.unlocked.fadeout {
+    animation: hideLock 1.5s forwards;
+}
+.padlock-icon:hover,
+.bin-icon:hover {
+    background-color: var(--light-background-hover);
+    color: var(--hover-color);
+}
+.bin-lid {
+    transform-origin: 50px 18px;
+    transition: transform 0.3s ease;
+}
+.bin-icon:hover .bin-lid {
+    transform: rotate(30deg);
+}
+
 .time-block .padlock-icon.unlocked .padlock-latch {
-    animation: openLatch 0.5s forwards; /* Trigger animation */
+    animation: openLatch 0.8s forwards;
+    cursor: auto;
 }
 @keyframes openLatch {
     0% {
         transform: translateY(0) rotateY(0deg);
-        transform-origin: 27px 40px; /* Fixed hinge point at the start of the path */
+        transform-origin: 30px 40px;
     }
     40% {
-        transform: translateY(-8px) rotateY(0deg); /* Lifting up */
-        transform-origin: 27px 40px;
+        transform: translateY(-8px) rotateY(0deg);
+        transform-origin: 30px 40px;
     }
     100% {
-        transform: translateY(-8px) rotateY(-180deg); /* Swinging open */
-        transform-origin: 27px 40px;
+        transform: translateY(-8px) rotateY(-180deg);
+        transform-origin: 30px 40px;
     }
 }
+@keyframes hideLock {
+    0% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
 .time-block.stretching {
+    /* Adjust to align with hover effect */
     transform: scaleY(1.05) scaleX(0.98);
 }
-
 .time-block.bouncing {
+    /* Adjust to align with hover effect */
     animation: elastic 0.8s ease-out forwards;
 }
-
+.time-block:hover.bouncing {
+    /* Adjust to align with hover effect */
+    animation: elasticAdjusted 0.8s ease-out forwards;
+    transform: translate(-2px, -2px);
+}
 @keyframes elastic {
     0% {
         transform: scaleY(1.05) scaleX(0.98);
@@ -340,41 +428,19 @@ label {
         transform: scaleY(1) scaleX(1);
     }
 }
-
-.time-block:hover {
-    transform: scale(1.02);
-}
-
-.bin-icon {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    border: none;
-    background-color: var(--light-background);
-    color: var(--primary-color);
-    cursor: pointer;
-    display: none;
-    font-size: 1em;
-    border-radius: 4px;
-    padding: 4px;
-    transition:
-        background-color 0.2s ease-in-out,
-        color 0.2s ease-in-out;
-}
-
-.time-block:hover .bin-icon {
-    display: block;
-    background-color: var(--light-background-hover);
-    color: var(--hover-color);
-}
-
-.bin-lid {
-    transform-origin: 50px 18px; /* Set origin to the right edge of the lid */
-    transition: transform 0.3s ease;
-}
-
-.bin-icon:hover .bin-lid {
-    transform: rotate(30deg); /* Rotate the lid to 'open' it from the right */
+@keyframes elasticAdjusted {
+    0% {
+        transform: translate(-2px, -2px) scaleY(1.05) scaleX(0.98);
+    }
+    30% {
+        transform: translate(-2px, -2px) scaleY(0.95) scaleX(1.02);
+    }
+    60% {
+        transform: translate(-2px, -2px) scaleY(1.02) scaleX(0.99);
+    }
+    100% {
+        transform: translate(-2px, -2px) scaleY(1) scaleX(1);
+    }
 }
 
 .time-block.overlap {
