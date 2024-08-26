@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTimeBlockContext } from '../context/TimeBlockContext'
 import { v4 as uuidv4 } from 'uuid'
-import type { TimeBlock } from '../context/TimeBlockContext'
+import type { TimeBlock } from '../db'
 
 const INTERVAL_HEIGHT = 40
 const HEADER_HEIGHT = 30

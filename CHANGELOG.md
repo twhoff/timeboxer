@@ -1,101 +1,117 @@
-Changelog
-Fix persistance
-Components:
+# Changelog
 
-TimeBlockGrid.tsx: Improved persistence mechanism and code refactoring. Removed unnecessary useEffect and adjusted position calculations for time blocks.
+## Fix Persistence
 
-Context:
+### Components
 
-TimeBlockContext.tsx: Added useEffect hooks for loading and saving time blocks to persistent storage.
+-   **`TimeBlockGrid.tsx`**:
 
-Controllers:
+    -   Improved persistence mechanism and code refactoring.
+    -   Enhanced the `renderTimeBlocks` method to include formatted time ranges for better display clarity. Introduced the `formatTime` function for converting intervals to human-readable time strings.
+    -   Removed unnecessary `useEffect` and adjusted position calculations for time blocks.
 
-useConfetti.ts: Refactored to improve confetti trigger logic.
+-   **`TimeBlock.tsx`**:
+    -   Updated to include a new `timeRange` prop for displaying time ranges on hover.
+    -   Refined hover logic for interactive elements like padlock, bin, and note icons.
 
-useTimeBlockPlacement.ts: Enhanced mouse event handling and introduced new logic to prevent event propagation from buttons.
+### Context
 
-DB:
+-   **`TimeBlockContext.tsx`**: Added `useEffect` hooks for loading and saving time blocks to persistent storage.
 
-db.ts: Streamlined load and save operations with better error handling.
+### Controllers
 
-Index:
+-   **`useConfetti.ts`**: Refactored to improve confetti trigger logic.
+-   **`useTimeBlockPlacement.ts`**:
+    -   Enhanced mouse event handling and introduced new logic to prevent event propagation from buttons.
+    -   Updated type imports to maintain consistency with database schema.
 
-index.tsx: Temporarily removed React.StrictMode for debugging.
+### DB
 
-Add time block bi-directional growth
-Prettier Configuration:
+-   **`db.ts`**: Streamlined load and save operations with better error handling.
 
-Updated .prettierrc to adjust printWidth.
+### Index
 
-Documentation:
+-   **`index.tsx`**: Temporarily removed `React.StrictMode` for debugging.
 
-Added COMMANDS.md with useful command instructions.
+## Add Time Block Bi-Directional Growth
 
-README:
+### Prettier Configuration
 
-Enhanced documentation with structured headings and updated project summary.
+-   Updated `.prettierrc` to adjust `printWidth`.
 
-ESLint Configuration:
+### Documentation
 
-Streamlined ESLint setup for better TypeScript and Prettier integration.
+-   Added `COMMANDS.md` with useful command instructions.
 
-Package.json:
+### README
 
-Added @types/canvas-confetti for improved typing support.
+-   Enhanced documentation with structured headings and updated project summary.
 
-CSS:
+### ESLint Configuration
 
-Improved styling and animations for time blocks, with additions for stretching and bouncing effects.
+-   Streamlined ESLint setup for better TypeScript and Prettier integration.
 
-App Component:
+### Package.json
 
-Significant refactoring to split into smaller components (TimeBlockGrid, ScaleColumn, etc.).
+-   Added `@types/canvas-confetti` for improved typing support.
 
-Convert to static layout and design tokens
-CSS:
+### CSS
 
-Introduced design tokens using CSS variables for better maintainability and theming.
+-   Improved styling and animations for time blocks, with additions for stretching and bouncing effects.
 
-App Component:
+### App Component
 
-Continued refactoring to enhance readability and performance.
+-   Significant refactoring to split into smaller components (TimeBlockGrid, ScaleColumn, etc.).
 
-TypeScript Configuration:
+## Convert to Static Layout and Design Tokens
 
-Updated tsconfig.json for better compatibility and module resolution.
+### CSS
 
-If you need further details or specific entries for particular changes, feel free to ask! This changelog provides a structured overview of what was modified in each commit, excluding the changes to yarn.lock and dist directories as requested.
+-   Introduced design tokens using CSS variables for better maintainability and theming.
+-   **`App.css`**:
+    -   Introduced `.time-block-wrapper` for improved layout management and hover effects.
+    -   Added styles for `.note-icon` with interactive effects.
+    -   Refined `.time-indicator` styling for better alignment and visibility.
 
-Convert to TypeScript
-General:
+### App Component
 
-Converted project files from JavaScript to TypeScript for improved type safety and maintainability.
+-   Continued refactoring to enhance readability and performance.
 
-Context:
+### TypeScript Configuration
 
-TimeBlockContext.tsx: Added TypeScript interfaces and types.
+-   Updated `tsconfig.json` for better compatibility and module resolution.
 
-DB:
+## Convert to TypeScript
 
-db.ts: Defined database schema and updated functions with TypeScript types.
+### General
 
-Components:
+-   Converted project files from JavaScript to TypeScript for improved type safety and maintainability.
 
-Refactored components to include TypeScript types for props and state management.
+### Context
 
-Add some tooling like ESLint and Prettier
-Tooling:
+-   **`TimeBlockContext.tsx`**: Added TypeScript interfaces and types.
 
-Set up ESLint for linting JavaScript and TypeScript files.
+### DB
 
-Configured Prettier for consistent code formatting, integrating it with ESLint.
+-   **`db.ts`**: Defined database schema and updated functions with TypeScript types.
 
-Configuration Files:
+### Components
 
-Added necessary configuration files for ESLint and Prettier.
+-   Refactored components to include TypeScript types for props and state management.
+-   **`TimeBlockPreview.tsx`**: Updated to include the `color` prop for enhanced styling consistency.
 
-Updated package.json to include scripts for linting and formatting.
+## Add Some Tooling like ESLint and Prettier
 
-Dependencies:
+### Tooling
 
-Installed necessary ESLint and Prettier plugins and configurations.
+-   Set up ESLint for linting JavaScript and TypeScript files.
+-   Configured Prettier for consistent code formatting, integrating it with ESLint.
+
+### Configuration Files
+
+-   Added necessary configuration files for ESLint and Prettier.
+-   Updated `package.json` to include scripts for linting and formatting.
+
+### Dependencies
+
+-   Installed necessary ESLint and Prettier plugins and configurations.

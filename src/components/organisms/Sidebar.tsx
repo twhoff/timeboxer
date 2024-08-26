@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { v4 as uuidv4 } from 'uuid'
 import { TimeBlockContext } from '../../context/TimeBlockContext'
 import {
@@ -334,50 +335,56 @@ const Sidebar: React.FC = () => {
                     </svg>
                 </button>
             </div>
-            {contextMenu && (
-                <div
-                    className="context-menu"
-                    style={{ top: contextMenu.y, left: contextMenu.x }}
-                >
-                    <button
-                        onClick={() =>
-                            handleDeleteSchedule(
-                                contextMenu.id,
-                                schedules.find(s => s.id === contextMenu.id)
-                                    ?.name || ''
-                            )
-                        }
+            {contextMenu &&
+                ReactDOM.createPortal(
+                    <div
+                        className="context-menu"
+                        style={{
+                            top: `${contextMenu.y}px`,
+                            left: `${contextMenu.x}px`,
+                            position: 'fixed',
+                        }}
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 64 64"
-                            width="16"
-                            height="16"
-                            fill="#555"
+                        <button
+                            onClick={() =>
+                                handleDeleteSchedule(
+                                    contextMenu.id,
+                                    schedules.find(s => s.id === contextMenu.id)
+                                        ?.name || ''
+                                )
+                            }
                         >
-                            <rect
-                                x="16"
-                                y="24"
-                                width="32"
-                                height="32"
-                                rx="2"
-                                ry="2"
-                            />
-                            <g className="bin-lid">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 64 64"
+                                width="16"
+                                height="16"
+                                fill="#555"
+                            >
                                 <rect
-                                    x="14"
-                                    y="14"
-                                    width="36"
-                                    height="8"
-                                    rx="1"
-                                    ry="1"
+                                    x="16"
+                                    y="24"
+                                    width="32"
+                                    height="32"
+                                    rx="2"
+                                    ry="2"
                                 />
-                            </g>
-                        </svg>
-                        Delete schedule
-                    </button>
-                </div>
-            )}
+                                <g className="bin-lid">
+                                    <rect
+                                        x="14"
+                                        y="14"
+                                        width="36"
+                                        height="8"
+                                        rx="1"
+                                        ry="1"
+                                    />
+                                </g>
+                            </svg>
+                            Delete schedule
+                        </button>
+                    </div>,
+                    document.body // Attach to document body
+                )}
             {confirmDelete && (
                 <div className="confirmation-dialog">
                     <p>

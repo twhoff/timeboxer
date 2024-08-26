@@ -5,9 +5,9 @@ interface TimeBlockPreviewProps {
         top: number
         height: number
         timeRange: string
-        direction: string | null
     } | null
     bgColor?: string
+    color?: string // Ensure color prop is available
 }
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -20,14 +20,15 @@ const hexToRgba = (hex: string, alpha: number) => {
 export const TimeBlockPreview: React.FC<TimeBlockPreviewProps> = ({
     blockProps,
     bgColor = '#e0e0e0',
+    color = '#007bff', // Default color
 }) => {
     if (!blockProps) return null
 
-    const { top, height, timeRange, direction } = blockProps
+    const { top, height, timeRange } = blockProps
 
     return (
         <div
-            className="time-block stretching"
+            className="time-block stretching dragging"
             style={{
                 top: `${top}px`,
                 height: `${height}px`,
@@ -40,11 +41,10 @@ export const TimeBlockPreview: React.FC<TimeBlockPreviewProps> = ({
                 className="time-indicator"
                 data-testid="time-block-time-indicator"
                 style={{
-                    position: 'absolute',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    top: direction !== 'down' ? '0' : 'unset',
-                    bottom: direction === 'down' ? '0' : 'unset',
+                    backgroundColor: bgColor,
+                    color: color,
+                    borderTopColor: color,
+                    borderRightColor: color,
                 }}
             >
                 {timeRange}

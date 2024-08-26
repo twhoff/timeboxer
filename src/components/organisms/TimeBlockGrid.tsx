@@ -120,6 +120,14 @@ export const TimeBlockGrid: React.FC = () => {
         return schedules.find(schedule => schedule.id === id)
     }
 
+    const formatTime = (interval: number) => {
+        const totalMinutes = interval * 15
+        const hour = Math.floor(totalMinutes / 60)
+        const minutes = totalMinutes % 60
+        const period = hour >= 12 ? 'PM' : 'AM'
+        const formattedHour = hour % 12 === 0 ? 12 : hour % 12
+        return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
+    }
     const renderTimeBlocks = (
         scheduleId: string,
         opacity: number,
@@ -129,40 +137,45 @@ export const TimeBlockGrid: React.FC = () => {
         const scheduleDetails = getScheduleDetails(scheduleId)
         const scheduleColor = scheduleDetails?.color
         const scheduleBgColor = scheduleDetails?.bgColor
-
         return (
             timeBlocks[scheduleId]
                 ?.filter(block => block.dayIndex === dayIndex)
-                .map(block => (
-                    <div key={block.id}>
-                        {block.id !== null && (
-                            <TimeBlock
-                                blockId={block.id}
-                                scheduleId={scheduleId}
-                                className={
-                                    block.id === bouncingBlockId
-                                        ? 'bouncing'
-                                        : ''
-                                }
-                                top={
-                                    block.start * (INTERVAL_HEIGHT / 4) +
-                                    HEADER_HEIGHT
-                                }
-                                height={
-                                    (block.end - block.start) *
-                                    (INTERVAL_HEIGHT / 4)
-                                }
-                                onDelete={e =>
-                                    deleteTimeBlock(dayIndex, block.id, e)
-                                }
-                                color={scheduleColor}
-                                bgColor={scheduleBgColor}
-                                opacity={opacity}
-                                zIndex={zIndex}
-                            />
-                        )}
-                    </div>
-                )) || []
+                .map(block => {
+                    const startTime = formatTime(block.start)
+                    const endTime = formatTime(block.end)
+                    const timeRange = `${startTime} - ${endTime}`
+                    return (
+                        <div key={block.id}>
+                            {block.id !== null && (
+                                <TimeBlock
+                                    blockId={block.id}
+                                    scheduleId={scheduleId}
+                                    className={
+                                        block.id === bouncingBlockId
+                                            ? 'bouncing'
+                                            : ''
+                                    }
+                                    top={
+                                        block.start * (INTERVAL_HEIGHT / 4) +
+                                        HEADER_HEIGHT
+                                    }
+                                    height={
+                                        (block.end - block.start) *
+                                        (INTERVAL_HEIGHT / 4)
+                                    }
+                                    onDelete={e =>
+                                        deleteTimeBlock(dayIndex, block.id, e)
+                                    }
+                                    color={scheduleColor}
+                                    bgColor={scheduleBgColor}
+                                    opacity={opacity}
+                                    zIndex={zIndex}
+                                    timeRange={timeRange} // Use formatted time range
+                                />
+                            )}
+                        </div>
+                    )
+                }) || []
         )
     }
 
@@ -195,6 +208,7 @@ export const TimeBlockGrid: React.FC = () => {
                             bgColor={
                                 getScheduleDetails(selectedSchedule)?.bgColor
                             }
+                            color={getScheduleDetails(selectedSchedule)?.color} // Pass color prop
                         />
                     )}
                 </div>

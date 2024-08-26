@@ -294,10 +294,14 @@ label {
     height: var(--interval-height);
 }
 
-.time-block {
+.time-block-wrapper {
     position: absolute;
-    left: 0;
-    right: 0;
+    padding: 10px; /* This creates the 10px gutter */
+    z-index: 1; /* Ensure it sits above other elements as needed */
+    overflow: visible; /* Ensure the gutters are visible */
+}
+.time-block {
+    position: relative;
     background-color: rgba(0, 123, 255, 0.7);
     border: 1px solid transparent;
     border-radius: 4px;
@@ -315,21 +319,19 @@ label {
     width: 100%;
     height: 100%;
 }
-
-.time-block:hover {
-    /* Increase width and height by a fixed amount */
-    width: calc(100% + 4px); /* Add fixed pixels to width */
-    /* Optional: Center the pop effect around the original position */
+.time-block-wrapper:hover .time-block {
+    width: calc(100% + 4px);
     transform: translate(-2px, -2px);
     z-index: 9999 !important;
 }
 
-.time-block:hover,
+.time-block-wrapper:hover .time-block,
 .time-block.dragging {
     min-height: 24px;
 }
 
 .padlock-icon,
+.note-icon,
 .bin-icon {
     display: flex;
     justify-content: center;
@@ -346,6 +348,7 @@ label {
     opacity: 0;
 }
 .time-block:hover .padlock-icon,
+.time-block:hover .note-icon,
 .time-block:hover .bin-icon {
     opacity: 1;
 }
@@ -443,20 +446,42 @@ label {
     }
 }
 
+.time-indicator {
+    position: absolute;
+    bottom: 0; /* Align at the bottom */
+    left: 0; /* Align at the left */
+    font-size: 10px; /* Set font size */
+    padding: 4px 8px;
+    border-top: 1px solid; /* Border without color */
+    border-right: 1px solid; /* Border without color */
+    border-top-right-radius: 4px; /* Rounded top-right corner */
+    white-space: nowrap;
+    text-align: center;
+    /* Remove specific shadow color */
+}
+
 .time-block.overlap {
     background-color: var(--alert-color);
     margin-left: 5px;
 }
 
-.time-indicator {
-    background-color: var(--light-background);
-    padding: 2px 4px;
-    font-size: var(--font-size-small);
-    border-radius: 4px;
-    white-space: nowrap;
-    text-align: center;
+.mechanical-pencil {
+    transition: transform 0.3s ease-in-out;
+    transform: rotate(40deg); /* Rotate for diagonal alignment */
 }
 
+.eraser,
+.tip {
+    transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.note-icon:hover .eraser {
+    transform: translateY(4px); /* Eraser presses down */
+}
+
+.note-icon:hover .tip {
+    transform: translateY(3px); /* Tip extends out */
+}
 @media (max-width: 768px) {
     .app-container {
         width: 100vw;

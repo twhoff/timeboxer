@@ -11,6 +11,7 @@ interface TimeBlockProps {
     opacity?: number
     zIndex?: number
     scheduleId: string
+    timeRange: string
 }
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -30,12 +31,14 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
     opacity = 1,
     zIndex = 1,
     scheduleId,
+    timeRange,
 }) => {
     const { selectedSchedule, setSelectedSchedule } = useTimeBlockContext()
     const [isUnlocked, setIsUnlocked] = useState(false)
+    const [isHovered, setIsHovered] = useState(false)
 
     const isSelectedSchedule = selectedSchedule === scheduleId
-    const borderColor = isSelectedSchedule ? color : bgColor
+    const borderColor = isSelectedSchedule || isHovered ? color : bgColor
 
     const handleLockClick = () => {
         setIsUnlocked(true)
@@ -50,92 +53,189 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
 
     return (
         <div
-            data-testid="time-block"
-            className={`time-block ${className}`}
+            data-testid="time-block-wrapper"
+            className="time-block-wrapper"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             style={{
-                top: `${top}px`,
-                height: `${height}px`,
-                backgroundColor: hexToRgba(bgColor, opacity),
-                borderColor,
-                borderWidth: '1px',
-                borderStyle: 'solid',
-                zIndex,
                 position: 'absolute',
-                overflow: 'hidden',
+                top: `${top - 10}px`,
+                left: '-10px',
+                right: '-10px',
+                padding: '10px',
+                zIndex,
+                overflow: 'visible',
             }}
         >
-            <button
-                className={`padlock-icon ${isUnlocked ? 'unlocked fadeout' : ''} ${isSelectedSchedule ? 'hidden' : ''}`}
-                onClick={handleLockClick}
-                aria-label="Toggle lock"
+            <div
+                data-testid="time-block"
+                className={`time-block ${className}`}
                 style={{
-                    position: 'absolute',
-                    top: '-2px',
-                    left: '-7px',
-                    width: '24px',
-                    height: '24px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color,
+                    height: `${height}px`,
+                    backgroundColor: hexToRgba(bgColor, opacity),
+                    borderColor,
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    zIndex,
+                    position: 'relative',
+                    overflow: 'hidden',
                 }}
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 70 70"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
+                {isHovered && (
+                    <div
+                        className="time-indicator"
+                        style={{
+                            backgroundColor: bgColor,
+                            color: color,
+                            borderTopColor: color,
+                            borderRightColor: color,
+                        }}
+                    >
+                        {timeRange}
+                    </div>
+                )}
+                <button
+                    className={`padlock-icon ${isUnlocked ? 'unlocked fadeout' : ''} ${isSelectedSchedule ? 'hidden' : ''}`}
+                    onClick={handleLockClick}
+                    aria-label="Toggle lock"
+                    style={{
+                        position: 'absolute',
+                        top: '-2px',
+                        left: '-7px',
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color,
+                        opacity: isHovered ? 1 : 0, // Consistent show/hide logic
+                    }}
                 >
-                    <rect x="22" y="33" width="32" height="26" rx="2" ry="2" />{' '}
-                    <path
-                        className="padlock-latch"
-                        d="M30 43 V23 C30 17, 46 17, 46 23 V33"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                    />
-                </svg>
-            </button>
-            <button
-                className="bin-icon"
-                onClick={e => {
-                    e.stopPropagation()
-                    onDelete(e)
-                }}
-                aria-label="Delete time block"
-                style={{
-                    position: 'absolute',
-                    top: '-2px',
-                    right: '4px',
-                    width: '24px',
-                    height: '24px',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color,
-                }}
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 64 64"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                >
-                    <rect x="16" y="24" width="32" height="32" rx="2" ry="2" />
-                    <g className="bin-lid">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 70 70"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                    >
                         <rect
-                            x="14"
-                            y="14"
-                            width="36"
-                            height="8"
-                            rx="1"
-                            ry="1"
+                            x="22"
+                            y="33"
+                            width="32"
+                            height="26"
+                            rx="2"
+                            ry="2"
+                        />{' '}
+                        <path
+                            className="padlock-latch"
+                            d="M30 43 V23 C30 17, 46 17, 46 23 V33"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="4"
                         />
-                    </g>
-                </svg>
-            </button>
+                    </svg>
+                </button>
+                <button
+                    className="bin-icon"
+                    onClick={e => {
+                        e.stopPropagation()
+                        onDelete(e)
+                    }}
+                    aria-label="Delete time block"
+                    style={{
+                        position: 'absolute',
+                        top: '-2px',
+                        right: '4px',
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color,
+                        opacity: isHovered ? 1 : 0, // Consistent show/hide logic
+                    }}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 64 64"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                    >
+                        <rect
+                            x="16"
+                            y="24"
+                            width="32"
+                            height="32"
+                            rx="2"
+                            ry="2"
+                        />
+                        <g className="bin-lid">
+                            <rect
+                                x="14"
+                                y="14"
+                                width="36"
+                                height="8"
+                                rx="1"
+                                ry="1"
+                            />
+                        </g>
+                    </svg>
+                </button>
+                <button
+                    className="note-icon"
+                    aria-label="Edit time block"
+                    style={{
+                        position: 'absolute',
+                        top: '0px',
+                        right: '24px',
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color,
+                        opacity: isHovered ? 1 : 0, // Consistent show/hide logic
+                    }}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 64 64"
+                        width="16"
+                        height="16"
+                        className="mechanical-pencil"
+                    >
+                        <rect
+                            x="28"
+                            y="5"
+                            width="8"
+                            height="8"
+                            rx="2"
+                            ry="2"
+                            fill="currentColor"
+                            className="eraser"
+                        />
+                        <rect
+                            x="28"
+                            y="16"
+                            width="8"
+                            height="28"
+                            fill="currentColor"
+                            className="shaft"
+                        />
+                        <path
+                            d="M28 44 L32 50 L36 44 L32 47"
+                            fill="currentColor"
+                            className="sheathe"
+                        />
+                        <path
+                            d="M30 47 L32 54 L34 47"
+                            fill="currentColor"
+                            className="tip"
+                        />
+                    </svg>
+                </button>
+            </div>
         </div>
     )
 }
