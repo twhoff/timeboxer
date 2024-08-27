@@ -6,46 +6,129 @@ The Time Blocking App is designed to help users manage their time efficiently by
 
 ## Current State
 
+### Output of `tree /Users/thoffmann/Desktop/timeboxer -I 'node_modules|dist|.*'`:
+
+```
+/Users/thoffmann/Desktop/timeboxer
+├── CHANGELOG.md
+├── COMMANDS.md
+├── README.md
+├── eslint.config.mjs
+├── package.json
+├── public
+│   └── index.html
+├── src
+│   ├── App.css
+│   ├── App.tsx
+│   ├── components
+│   │   ├── atoms
+│   │   │   ├── IntervalLine.tsx
+│   │   │   ├── TimeHeader.tsx
+│   │   │   └── TimeLabel.tsx
+│   │   ├── molecules
+│   │   │   ├── ScaleColumn.tsx
+│   │   │   ├── TimeBlock.tsx
+│   │   │   └── TimeBlockPreview.tsx
+│   │   └── organisms
+│   │       ├── Sidebar.tsx
+│   │       └── TimeBlockGrid.tsx
+│   ├── context
+│   │   └── TimeBlockContext.tsx
+│   ├── controllers
+│   │   ├── useConfetti.ts
+│   │   └── useTimeBlockPlacement.ts
+│   ├── db.ts
+│   ├── index.tsx
+│   └── utils
+│       └── colorGenerator.ts
+├── tsconfig.json
+└── yarn.lock
+
+10 directories, 24 files
+```
+
+## Time Blocker Project - Key File Summaries
+
+### `db.ts`
+
+-   **Purpose**: Manages data persistence for the application using IndexedDB.
+-   **Key Features**:
+    -   Defines data structures for `TimeBlock` and `Schedule`.
+    -   Initializes the database with necessary stores.
+    -   Provides CRUD operations for time blocks and schedules.
+    -   Manages a color rotation value for dynamic color assignment.
+-   **Technologies**: Utilizes the `idb` package for a promise-based IndexedDB interaction.
+
+### `TimeBlockGrid.tsx`
+
+-   **Purpose**: Serves as the primary UI component for displaying and interacting with time blocks.
+-   **Key Features**:
+    -   Utilizes `useTimeBlockContext` for state management.
+    -   Handles user interactions for adding, deleting, and adjusting time blocks.
+    -   Dynamically renders time blocks with visual feedback (e.g., confetti on delete, bouncing animation).
+-   **Technologies**: Built with React, integrating custom hooks like `useTimeBlockPlacement` and `useConfetti`.
+
+### `TimeBlockContext.tsx`
+
+-   **Purpose**: Establishes a global state management system for time blocks and schedules.
+-   **Key Features**:
+    -   Exports `useTimeBlockContext` hook for accessing the context.
+    -   Manages state for time blocks, schedules, and the selected schedule.
+    -   Implements persistence with loading and saving data to IndexedDB.
+-   **Technologies**: Utilizes React Context and Hooks for effective state management across components.
+
+### `useTimeBlockPlacement.ts`
+
+-   **Purpose**: Manages the logic for placing and dragging time blocks within the grid.
+-   **Key Features**:
+    -   Provides interactive logic for adding new blocks and adjusting existing ones.
+    -   Offers real-time visual feedback during drag operations.
+    -   Integrates with `useTimeBlockContext` for reflecting changes in the global state.
+-   **Technologies**: A custom React hook that leverages mouse event handling and UUID generation for unique identifiers.
+
+These files collectively underpin the functionality of the Time Blocker project, handling everything from data persistence to user interactions and state management, ensuring a cohesive and dynamic user experience.
+
 ### Core Features Implemented
 
--   **Grid Layout**: Displays days of the week and time intervals in a structured grid format.
--   **Time Block Creation**: Users can create time blocks by clicking and dragging within day columns.
--   **Dynamic Time Indicator**: Provides real-time feedback for selected time intervals.
--   **Persistent State**: Time blocks are stored persistently using IndexedDB.
+-   **Bi-Directional Growth for Time Blocks**: Enables time blocks to expand or shrink in both directions for more flexible time management.
+-   **Persistence Mechanism**: Enhanced to ensure the reliable storage and retrieval of time blocks, improving the application's usability across sessions.
+-   **Static Layout and Design Tokens**: Transitioned to a static layout using CSS variables for design tokens, facilitating easier theming and consistent styling.
+-   **Tooling and Quality Assurance**: Added ESLint and Prettier for code quality, along with TypeScript conversion for type safety, enhancing overall code maintainability and development experience.
+-   **Animation and UI Feedback**: Introduced animations for time blocks and added visual indicators (like confetti on certain actions), enriching the user interface and interaction feedback.
 
 ### Recent Fixes and Improvements
 
--   **TypeScript Integration**: Converted project files to TypeScript for improved type safety.
--   **Tooling Setup**: Configured ESLint and Prettier for consistent code quality.
+-   **TypeScript Integration**: Converted project files to TypeScript for improved type safety and development efficiency.
+-   **Tooling Setup**: Configured ESLint and Prettier for consistent code quality, ensuring a uniform coding standard across the project.
 -   **CSS Layout Updates**: Utilised CSS variables for improved consistency and maintainability, setting a foundation for future theming and design tokens.
--   **Performance Enhancements**: Refactored components for better readability and performance.
+-   **Performance Enhancements**: Refactored components like `TimeBlockGrid` and `TimeBlock` for better readability and performance, ensuring smoother user experiences.
 
 ## Next Steps
 
-1. **Add Schedules**: Introduce the concept of Schedules, which will be groups of time blocks across multiple days, allowing multiple blocks per day.
-2. **Update Selection Interval**: Change the time block selection interval to 15 minutes. Adjust the pixel threshold per interval to 25% of the height (using `rem` units for precision).
+1. **Add Schedules**: Introduce the concept of Schedules, which will be groups of time blocks across multiple days, allowing for more detailed and flexible time management.
+2. **Update Selection Interval**: Implement a more granular 15-minute selection interval for time blocks, offering users more precise control over their time planning.
 
 ### Feature Enhancements
 
--   **Explore Theming**: Develop a theming system leveraging CSS variables for different design tokens or modes.
--   **Refine UI/UX**: Continue refining the user interface for improved user experience, making it more intuitive and visually appealing.
+-   **Explore Theming**: Develop a theming system leveraging CSS variables for different design tokens or modes, enabling custom themes or dark/light mode.
+-   **Refine UI/UX**: Continue refining the user interface and user experience, focusing on making the application more intuitive, visually appealing, and responsive.
 
 ## How to Pick Up the Project
 
 ### Review the Codebase
 
--   Familiarise yourself with the current state by reviewing key files and understanding the architecture.
+Familiarise yourself with the current state by reviewing key files and understanding the architecture and core functionalities of the project.
 
 ### Set Up the Development Environment
 
 -   Ensure dependencies are installed by running `yarn install`.
--   Start the development server using `yarn start`.
+-   Start the development server using `yarn start` to see the application in action.
 
 ### Focus Areas
 
 -   Continue with the TypeScript migration and testing as outlined in the next steps.
--   Prioritise any immediate UI/UX improvements based on user feedback or testing outcomes.
+-   Prioritise any immediate UI/UX improvements based on user feedback or usability testing outcomes.
 
 ## Contact
 
-For any questions or further clarification, feel free to reach out to the team or check the project's issue tracker for more details on specific tasks.
+For any questions or further clarification, feel free to reach out to the team or check the project's issue tracker for more details on specific tasks or to contribute.
