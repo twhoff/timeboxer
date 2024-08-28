@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
 
 interface TimeBlockProps {
+    blockId: string
     top: number
     height: number
     onDelete: React.MouseEventHandler<HTMLButtonElement>
@@ -12,6 +13,10 @@ interface TimeBlockProps {
     zIndex?: number
     scheduleId: string
     timeRange: string
+    blockProps?: {
+        top: number
+        height: number
+    }
 }
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -22,6 +27,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 }
 
 export const TimeBlock: React.FC<TimeBlockProps> = ({
+    blockId,
     top,
     height,
     onDelete,
@@ -32,10 +38,15 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
     zIndex = 1,
     scheduleId,
     timeRange,
+    blockProps,
 }) => {
+    const RESIZE_THRESHOLD = 5
+
     const { selectedSchedule, setSelectedSchedule } = useTimeBlockContext()
     const [isUnlocked, setIsUnlocked] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
+    const [cursorStyle, setCursorStyle] = useState<string>('default')
+    const blockRef = useRef<HTMLDivElement | null>(null)
 
     const isSelectedSchedule = selectedSchedule === scheduleId
     const borderColor = isSelectedSchedule || isHovered ? color : bgColor
@@ -51,6 +62,29 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
         }
     }, [isSelectedSchedule])
 
+    // Add a useEffect to log blockProps
+    useEffect(() => {
+        if (blockProps) {
+            console.log('Rendering TimeBlock with:', blockProps)
+        }
+    }, [blockProps])
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const blockRect = blockRef.current?.getBoundingClientRect()
+        if (!blockRect) return
+
+        const mouseYRelativeToBlock = e.clientY - blockRect.top
+        const isNearTop = mouseYRelativeToBlock <= RESIZE_THRESHOLD
+        const isNearBottom =
+            blockRect.height - mouseYRelativeToBlock <= RESIZE_THRESHOLD
+
+        if (isNearTop || isNearBottom) {
+            setCursorStyle('ns-resize')
+        } else {
+            setCursorStyle('default')
+        }
+    }
+
     return (
         <div
             data-testid="time-block-wrapper"
@@ -59,7 +93,7 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
             onMouseLeave={() => setIsHovered(false)}
             style={{
                 position: 'absolute',
-                top: `${top - 10}px`,
+                top: blockProps?.top ?? top - 10,
                 left: '-10px',
                 right: '-10px',
                 padding: '10px',
@@ -68,10 +102,13 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
             }}
         >
             <div
+                ref={blockRef}
                 data-testid="time-block"
                 className={`time-block ${className}`}
+                onMouseMove={handleMouseMove}
+                data-block-id={blockId}
                 style={{
-                    height: `${height}px`,
+                    height: blockProps?.height ?? height,
                     backgroundColor: hexToRgba(bgColor, opacity),
                     borderColor,
                     borderWidth: '1px',
@@ -79,6 +116,7 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                     zIndex,
                     position: 'relative',
                     overflow: 'hidden',
+                    cursor: cursorStyle,
                 }}
             >
                 {isHovered && (
@@ -95,7 +133,9 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                     </div>
                 )}
                 <button
-                    className={`padlock-icon ${isUnlocked ? 'unlocked fadeout' : ''} ${isSelectedSchedule ? 'hidden' : ''}`}
+                    className={`padlock-icon ${
+                        isUnlocked ? 'unlocked fadeout' : ''
+                    } ${isSelectedSchedule ? 'hidden' : ''}`}
                     onClick={handleLockClick}
                     aria-label="Toggle lock"
                     style={{
@@ -108,7 +148,7 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                         border: 'none',
                         cursor: 'pointer',
                         color,
-                        opacity: isHovered ? 1 : 0, // Consistent show/hide logic
+                        opacity: isHovered ? 1 : 0,
                     }}
                 >
                     <svg
@@ -125,7 +165,7 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                             height="26"
                             rx="2"
                             ry="2"
-                        />{' '}
+                        />
                         <path
                             className="padlock-latch"
                             d="M30 43 V23 C30 17, 46 17, 46 23 V33"
@@ -135,106 +175,110 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
                         />
                     </svg>
                 </button>
-                <button
-                    className="bin-icon"
-                    onClick={e => {
-                        e.stopPropagation()
-                        onDelete(e)
-                    }}
-                    aria-label="Delete time block"
-                    style={{
-                        position: 'absolute',
-                        top: '-2px',
-                        right: '4px',
-                        width: '24px',
-                        height: '24px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color,
-                        opacity: isHovered ? 1 : 0, // Consistent show/hide logic
-                    }}
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 64 64"
-                        width="16"
-                        height="16"
-                        fill="currentColor"
-                    >
-                        <rect
-                            x="16"
-                            y="24"
-                            width="32"
-                            height="32"
-                            rx="2"
-                            ry="2"
-                        />
-                        <g className="bin-lid">
-                            <rect
-                                x="14"
-                                y="14"
-                                width="36"
-                                height="8"
-                                rx="1"
-                                ry="1"
-                            />
-                        </g>
-                    </svg>
-                </button>
-                <button
-                    className="note-icon"
-                    aria-label="Edit time block"
-                    style={{
-                        position: 'absolute',
-                        top: '0px',
-                        right: '24px',
-                        width: '24px',
-                        height: '24px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color,
-                        opacity: isHovered ? 1 : 0, // Consistent show/hide logic
-                    }}
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 64 64"
-                        width="16"
-                        height="16"
-                        className="mechanical-pencil"
-                    >
-                        <rect
-                            x="28"
-                            y="5"
-                            width="8"
-                            height="8"
-                            rx="2"
-                            ry="2"
-                            fill="currentColor"
-                            className="eraser"
-                        />
-                        <rect
-                            x="28"
-                            y="16"
-                            width="8"
-                            height="28"
-                            fill="currentColor"
-                            className="shaft"
-                        />
-                        <path
-                            d="M28 44 L32 50 L36 44 L32 47"
-                            fill="currentColor"
-                            className="sheathe"
-                        />
-                        <path
-                            d="M30 47 L32 54 L34 47"
-                            fill="currentColor"
-                            className="tip"
-                        />
-                    </svg>
-                </button>
+                {isSelectedSchedule && (
+                    <>
+                        <button
+                            className="bin-icon"
+                            onClick={e => {
+                                e.stopPropagation()
+                                onDelete(e)
+                            }}
+                            aria-label="Delete time block"
+                            style={{
+                                position: 'absolute',
+                                top: '-2px',
+                                right: '4px',
+                                width: '24px',
+                                height: '24px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color,
+                                opacity: isHovered ? 1 : 0,
+                            }}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 64 64"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                            >
+                                <rect
+                                    x="16"
+                                    y="24"
+                                    width="32"
+                                    height="32"
+                                    rx="2"
+                                    ry="2"
+                                />
+                                <g className="bin-lid">
+                                    <rect
+                                        x="14"
+                                        y="14"
+                                        width="36"
+                                        height="8"
+                                        rx="1"
+                                        ry="1"
+                                    />
+                                </g>
+                            </svg>
+                        </button>
+                        <button
+                            className="note-icon"
+                            aria-label="Edit time block"
+                            style={{
+                                position: 'absolute',
+                                top: '0px',
+                                right: '24px',
+                                width: '24px',
+                                height: '24px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color,
+                                opacity: isHovered ? 1 : 0,
+                            }}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 64 64"
+                                width="16"
+                                height="16"
+                                className="mechanical-pencil"
+                            >
+                                <rect
+                                    x="28"
+                                    y="5"
+                                    width="8"
+                                    height="8"
+                                    rx="2"
+                                    ry="2"
+                                    fill="currentColor"
+                                    className="eraser"
+                                />
+                                <rect
+                                    x="28"
+                                    y="16"
+                                    width="8"
+                                    height="28"
+                                    fill="currentColor"
+                                    className="shaft"
+                                />
+                                <path
+                                    d="M28 44 L32 50 L36 44 L32 47"
+                                    fill="currentColor"
+                                    className="sheathe"
+                                />
+                                <path
+                                    d="M30 47 L32 54 L34 47"
+                                    fill="currentColor"
+                                    className="tip"
+                                />
+                            </svg>
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     )

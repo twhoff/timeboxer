@@ -27,10 +27,12 @@ export const TimeBlockGrid: React.FC = () => {
         selectedSchedule,
         schedules,
     } = useTimeBlockContext()
-    const { handleMouseDown, blockProps } = useTimeBlockPlacement()
+    const { handleMouseDown, blockProps, activeBlockId } =
+        useTimeBlockPlacement()
     const triggerConfetti = useConfetti()
     const [activeDay, setActiveDay] = useState<number | null>(null)
     const [bouncingBlockId, setBouncingBlockId] = useState<string | null>(null)
+    const isResizing = useRef<boolean>(false)
     const gridRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -74,18 +76,16 @@ export const TimeBlockGrid: React.FC = () => {
         dayIndex: number,
         e: React.MouseEvent<HTMLDivElement>
     ) => {
+        isResizing.current = false
+        const RESIZE_THRESHOLD = 5
         const target = e.target as HTMLElement
-        const isCmdClick = e.metaKey // Check if the command key is pressed
-        // Handle cmd+click separately
-        if (isCmdClick && target.closest('.time-block')) {
-            console.log('Cmd+click on time block, initiating drag operation')
-            handleMouseDown(dayIndex, e) // Allow cmd+click to initiate drag
+        const isCmdClick = e.metaKey
+        const blockElement = target.closest('.time-block') as HTMLElement
+        const blockId = blockElement?.dataset.blockId
+
+        if (isCmdClick && blockElement) {
+            handleMouseDown(dayIndex, e, blockId)
             return
-        }
-        // For regular clicks, check if the click is on a time block
-        if (target.closest('.time-block')) {
-            console.log('Regular click on a time block, exiting handler')
-            return // Exit if clicking on an existing time block
         }
         console.log(`Mouse down on day column: ${daysOfWeek[dayIndex]}`)
         const isButtonOrChild = (element: HTMLElement | null): boolean => {
@@ -105,6 +105,40 @@ export const TimeBlockGrid: React.FC = () => {
             e.stopPropagation()
             return
         }
+
+        if (target.closest('.time-block')) {
+            const blockRect = blockElement.getBoundingClientRect()
+            const initialTop = blockRect.top
+            const initialHeight = blockRect.height
+            const mouseYRelativeToBlock = e.clientY - initialTop
+            let edge: 'top' | 'bottom' | null = null
+            if (
+                mouseYRelativeToBlock <= RESIZE_THRESHOLD &&
+                mouseYRelativeToBlock >= 0
+            ) {
+                console.log('Click on top edge of time block for resizing')
+                edge = 'top'
+            } else if (
+                initialHeight - mouseYRelativeToBlock <= RESIZE_THRESHOLD &&
+                mouseYRelativeToBlock >= 0
+            ) {
+                console.log('Click on bottom edge of time block for resizing')
+                edge = 'bottom'
+            }
+            if (edge) {
+                isResizing.current = true
+                setActiveDay(dayIndex)
+                handleMouseDown(
+                    dayIndex,
+                    e,
+                    blockElement.dataset.blockId!,
+                    edge
+                )
+                return
+            }
+            console.log('Regular click on a time block, exiting handler')
+            return
+        }
         if (!selectedSchedule) {
             console.log('No schedule selected; showing alert.')
             alert('Please select a schedule before adding time blocks.')
@@ -116,6 +150,7 @@ export const TimeBlockGrid: React.FC = () => {
         setActiveDay(dayIndex)
         handleMouseDown(dayIndex, e)
     }
+
     const getScheduleDetails = (id: string | null) => {
         return schedules.find(schedule => schedule.id === id)
     }
@@ -128,6 +163,7 @@ export const TimeBlockGrid: React.FC = () => {
         const formattedHour = hour % 12 === 0 ? 12 : hour % 12
         return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
     }
+
     const renderTimeBlocks = (
         scheduleId: string,
         opacity: number,
@@ -141,9 +177,14 @@ export const TimeBlockGrid: React.FC = () => {
             timeBlocks[scheduleId]
                 ?.filter(block => block.dayIndex === dayIndex)
                 .map(block => {
+                    if (block.id === activeBlockId && isResizing.current) {
+                        return null // Skip rendering the active block
+                    }
+
                     const startTime = formatTime(block.start)
                     const endTime = formatTime(block.end)
                     const timeRange = `${startTime} - ${endTime}`
+
                     return (
                         <div key={block.id}>
                             {block.id !== null && (
@@ -170,7 +211,7 @@ export const TimeBlockGrid: React.FC = () => {
                                     bgColor={scheduleBgColor}
                                     opacity={opacity}
                                     zIndex={zIndex}
-                                    timeRange={timeRange} // Use formatted time range
+                                    timeRange={timeRange}
                                 />
                             )}
                         </div>
@@ -202,15 +243,20 @@ export const TimeBlockGrid: React.FC = () => {
                                 schedule.id === selectedSchedule ? 2 : 1
                             )
                     )}
-                    {activeDay === dayIndex && blockProps && (
-                        <TimeBlockPreview
-                            blockProps={blockProps}
-                            bgColor={
-                                getScheduleDetails(selectedSchedule)?.bgColor
-                            }
-                            color={getScheduleDetails(selectedSchedule)?.color} // Pass color prop
-                        />
-                    )}
+                    {(activeDay === dayIndex ||
+                        (activeDay === dayIndex && activeBlockId)) &&
+                        blockProps && (
+                            <TimeBlockPreview
+                                blockProps={blockProps}
+                                bgColor={
+                                    getScheduleDetails(selectedSchedule)
+                                        ?.bgColor
+                                }
+                                color={
+                                    getScheduleDetails(selectedSchedule)?.color
+                                }
+                            />
+                        )}
                 </div>
             ))}
         </div>

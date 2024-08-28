@@ -3,9 +3,20 @@ import { useTimeBlockContext } from '../context/TimeBlockContext'
 import { v4 as uuidv4 } from 'uuid'
 import type { TimeBlock } from '../db'
 
+// Constants for layout
 const INTERVAL_HEIGHT = 40
 const HEADER_HEIGHT = 30
 const MOUSE_MOVE_THRESHOLD = INTERVAL_HEIGHT / 4 / 4
+const MIN_BLOCK_HEIGHT = INTERVAL_HEIGHT / 4
+
+// Resize state type
+interface ResizeState {
+    active: boolean
+    edge: 'top' | 'bottom' | null
+    initialY: number
+    initialHeight: number
+    initialTop: number
+}
 
 export const useTimeBlockPlacement = () => {
     const {
@@ -13,9 +24,11 @@ export const useTimeBlockPlacement = () => {
         setCurrentBlock,
         setTimeBlocks,
         setRecentBlockId,
+        schedules,
         selectedSchedule,
         timeBlocks,
     } = useTimeBlockContext()
+
     const [timeIndicator, setTimeIndicator] = useState<string>('')
     const [pointOfOrigin, setPointOfOrigin] = useState<number | null>(null)
     const [blockProps, setBlockProps] = useState<{
@@ -24,9 +37,27 @@ export const useTimeBlockPlacement = () => {
         timeRange: string
         direction: 'up' | 'down' | null
     } | null>(null)
+    const [activeBlockId, setActiveBlockId] = useState<string | null>(null) // Tracks the active block
+
     const isDraggingRef = useRef<boolean>(false)
     const currentDayIndexRef = useRef<number | null>(null)
     const processedDayIndices = useRef<Set<number>>(new Set())
+    const resizeStateRef = useRef<ResizeState>({
+        active: false,
+        edge: null,
+        initialY: 0,
+        initialHeight: 0,
+        initialTop: 0,
+    })
+
+    const formatTime = (interval: number) => {
+        const totalMinutes = interval * 15
+        const hour = Math.floor(totalMinutes / 60)
+        const minutes = totalMinutes % 60
+        const period = hour >= 12 ? 'PM' : 'AM'
+        const formattedHour = hour % 12 === 0 ? 12 : hour % 12
+        return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
+    }
 
     useEffect(() => {
         const dayColumns = Array.from(document.querySelectorAll('.day-column'))
@@ -50,24 +81,48 @@ export const useTimeBlockPlacement = () => {
 
     const handleMouseDown = (
         dayIndex: number,
-        e: React.MouseEvent<HTMLDivElement>
+        e: React.MouseEvent<HTMLDivElement>,
+        blockId?: string,
+        edge?: 'top' | 'bottom'
     ) => {
         e.preventDefault()
 
-        if (e.metaKey && selectedSchedule) {
-            const column = e.currentTarget as HTMLElement
-            const rect = column.getBoundingClientRect()
-            const clickY = e.clientY - rect.top - HEADER_HEIGHT
-            const clickInterval = Math.floor(clickY / (INTERVAL_HEIGHT / 4))
+        // If a blockId is present, the user clicked on a block somewhere
+        // In order to manipulate the block, it has be to in the selectedSchedule
+        const activeBlock =
+            selectedSchedule && blockId
+                ? timeBlocks[selectedSchedule]?.find(
+                      (block: TimeBlock) => block.id === blockId
+                  )
+                : null
 
-            const originalBlock = timeBlocks[selectedSchedule]?.find(
-                (block: TimeBlock) =>
-                    block.dayIndex === dayIndex &&
-                    block.start <= clickInterval &&
-                    block.end > clickInterval
-            )
+        if (!activeBlock && blockId) return
 
-            if (originalBlock) {
+        if (activeBlock) {
+            setActiveBlockId(activeBlock.id)
+            setCurrentBlock({
+                id: 'preview',
+                dayIndex: activeBlock.dayIndex,
+                start: activeBlock.start,
+                end: activeBlock.end,
+                color: activeBlock.color,
+                scheduleId: activeBlock.scheduleId,
+            })
+            if (edge) {
+                resizeStateRef.current = {
+                    active: true,
+                    edge: edge, // Set edge from parameter
+                    initialY: e.clientY,
+                    initialHeight: activeBlock.end - activeBlock.start,
+                    initialTop: activeBlock.start,
+                }
+            }
+        }
+
+        // Block duplication
+        if (e.metaKey && selectedSchedule && !edge) {
+            // CMD + Click on a block and drag the mouse across to duplicate the block to adjacent days
+            if (activeBlock) {
                 isDraggingRef.current = true
                 processedDayIndices.current.clear()
 
@@ -78,17 +133,18 @@ export const useTimeBlockPlacement = () => {
                 })
 
                 const handleDragMouseMove = () => {
+                    console.log('here')
                     if (!isDraggingRef.current) return
 
                     const targetDayIndex = currentDayIndexRef.current
 
                     if (
                         targetDayIndex !== null &&
-                        targetDayIndex !== originalBlock.dayIndex &&
+                        targetDayIndex !== activeBlock.dayIndex &&
                         !processedDayIndices.current.has(targetDayIndex)
                     ) {
                         const newBlock: TimeBlock = {
-                            ...originalBlock,
+                            ...activeBlock,
                             id: uuidv4(),
                             dayIndex: targetDayIndex,
                         }
@@ -144,29 +200,71 @@ export const useTimeBlockPlacement = () => {
                 return
             }
 
+            const schedule = schedules.find(
+                schedule => schedule.id === selectedSchedule
+            )
+
             const column = e.currentTarget as HTMLElement
             const rect = column.getBoundingClientRect()
             const startY = e.clientY - rect.top - HEADER_HEIGHT
             const startInterval = Math.round(startY / (INTERVAL_HEIGHT / 4))
 
-            setCurrentBlock({
-                id: 'preview',
-                dayIndex,
-                start: startInterval,
-                end: startInterval,
-            })
-            setPointOfOrigin(startInterval)
-            setBlockProps({
-                top: startInterval * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
-                height: 0,
-                timeRange: '',
-                direction: null,
-            })
+            if (!schedule) return
+
+            if (activeBlock) {
+                const start = activeBlock.start
+                const end = activeBlock.end
+                setCurrentBlock({
+                    id: 'preview',
+                    dayIndex,
+                    start,
+                    end,
+                    color: schedule.color,
+                    scheduleId: schedule.id,
+                })
+                setPointOfOrigin(
+                    edge === 'top' ? activeBlock.end : activeBlock.start
+                )
+                const timeRange = `${formatTime(Math.min(start, end))} - ${formatTime(Math.max(start, end))}`
+                setTimeIndicator(timeRange)
+                setBlockProps({
+                    top:
+                        activeBlock.start * (INTERVAL_HEIGHT / 4) +
+                        HEADER_HEIGHT,
+                    height:
+                        (activeBlock.end - activeBlock.start) *
+                        (INTERVAL_HEIGHT / 4),
+                    timeRange: timeRange,
+                    direction: null,
+                })
+            } else {
+                const start = startInterval
+                const end = startInterval + 1
+                setCurrentBlock({
+                    id: 'preview',
+                    dayIndex,
+                    start,
+                    end,
+                    color: schedule.color,
+                    scheduleId: schedule.id,
+                })
+                setPointOfOrigin(startInterval)
+                const timeRange = `${formatTime(Math.min(start, end))} - ${formatTime(Math.max(start, end))}`
+                setTimeIndicator(timeRange)
+                setBlockProps({
+                    top: startInterval * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
+                    height: MIN_BLOCK_HEIGHT,
+                    timeRange: timeRange,
+                    direction: null,
+                })
+            }
         }
     }
 
     useEffect(() => {
         const handleMouseMove = (moveEvent: MouseEvent) => {
+            const resizeState = resizeStateRef.current
+
             if (!currentBlock || pointOfOrigin === null) return
 
             const column =
@@ -182,32 +280,54 @@ export const useTimeBlockPlacement = () => {
                 adjustedY / (INTERVAL_HEIGHT / 4)
             )
 
-            let start = pointOfOrigin
-            let end = pointOfOrigin
+            let start: number
+            let end: number
+
+            let direction: 'up' | 'down' = 'down'
 
             const pixelDifference =
                 adjustedY - pointOfOrigin * (INTERVAL_HEIGHT / 4)
 
-            let direction: 'up' | 'down' = 'down'
-            if (pixelDifference >= MOUSE_MOVE_THRESHOLD) {
-                end = Math.max(currentInterval + 1, pointOfOrigin + 1)
-                direction = 'down'
-            } else if (pixelDifference <= -MOUSE_MOVE_THRESHOLD) {
-                start = Math.min(currentInterval, pointOfOrigin - 1)
-                direction = 'up'
-            }
-            const formatTime = (interval: number) => {
-                const totalMinutes = interval * 15
-                const hour = Math.floor(totalMinutes / 60)
-                const minutes = totalMinutes % 60
-                const period = hour >= 12 ? 'PM' : 'AM'
-                const formattedHour = hour % 12 === 0 ? 12 : hour % 12
-                return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
-            }
+            if (resizeState.active) {
+                // Resizing logic
+                start = currentBlock.start
+                end = currentBlock.end
 
-            const timeRange = `${formatTime(
-                Math.min(start, end)
-            )} - ${formatTime(Math.max(start, end))}`
+                if (resizeState.edge === 'bottom') {
+                    if (pixelDifference >= MOUSE_MOVE_THRESHOLD) {
+                        direction = 'down'
+                        start = Math.min(currentInterval, pointOfOrigin)
+                        end = Math.max(currentInterval + 1, pointOfOrigin)
+                    } else if (pixelDifference <= -MOUSE_MOVE_THRESHOLD) {
+                        direction = 'up'
+                        start = Math.min(currentInterval, pointOfOrigin)
+                        end = Math.max(currentInterval - 1, pointOfOrigin)
+                    }
+                } else if (resizeState.edge === 'top') {
+                    if (pixelDifference >= MOUSE_MOVE_THRESHOLD) {
+                        direction = 'down'
+                        start = Math.min(currentInterval, pointOfOrigin)
+                        end = Math.max(currentInterval + 1, pointOfOrigin)
+                    } else if (pixelDifference <= -MOUSE_MOVE_THRESHOLD) {
+                        direction = 'up'
+                        start = Math.min(currentInterval, pointOfOrigin)
+                        end = Math.max(currentInterval - 1, pointOfOrigin)
+                    }
+                }
+            } else {
+                // Handle new block drawing logic (unchanged from the original logic)
+                start = pointOfOrigin
+                end = pointOfOrigin
+
+                if (pixelDifference >= MOUSE_MOVE_THRESHOLD) {
+                    end = Math.max(currentInterval + 1, pointOfOrigin + 1)
+                    direction = 'down'
+                } else if (pixelDifference <= -MOUSE_MOVE_THRESHOLD) {
+                    start = Math.min(currentInterval, pointOfOrigin - 1)
+                    direction = 'up'
+                }
+            }
+            const timeRange = `${formatTime(Math.min(start, end))} - ${formatTime(Math.max(start, end))}`
             setTimeIndicator(timeRange)
             setBlockProps({
                 top:
@@ -228,38 +348,72 @@ export const useTimeBlockPlacement = () => {
                     : null
             )
         }
-
         const handleMouseUp = () => {
+            const resizeState = resizeStateRef.current
+            if (resizeState.active) {
+                console.log('Resizing finished')
+                resizeStateRef.current = {
+                    active: false,
+                    edge: null,
+                    initialY: 0,
+                    initialHeight: 0,
+                    initialTop: 0,
+                }
+                setActiveBlockId(null) // Clear active block id
+            }
+
             if (isDraggingRef.current) {
                 const timeBlockElements =
                     document.querySelectorAll('.time-block')
                 timeBlockElements.forEach(element => {
                     element.classList.remove('dragging')
                 })
+                isDraggingRef.current = false
             }
 
             if (!currentBlock || pointOfOrigin === null || !selectedSchedule)
                 return
 
-            const { start, end } = currentBlock
+            const { start, end, color, scheduleId, dayIndex } = currentBlock
 
-            const newBlock: TimeBlock = {
-                id: uuidv4(),
-                dayIndex: currentBlock.dayIndex,
-                start,
-                end: start === end ? end + 1 : end,
+            if (activeBlockId) {
+                // Resizing an existing block
+                setTimeBlocks(prevBlocks => {
+                    const updatedBlocks = (
+                        prevBlocks[selectedSchedule] || []
+                    ).map(block =>
+                        block.id === activeBlockId
+                            ? { ...block, start, end }
+                            : block
+                    )
+                    return {
+                        ...prevBlocks,
+                        [selectedSchedule]: updatedBlocks,
+                    }
+                })
+            } else {
+                // Creating a new block
+                const newBlock: TimeBlock = {
+                    id: uuidv4(),
+                    dayIndex,
+                    start,
+                    end: start === end ? end + 1 : end,
+                    color,
+                    scheduleId,
+                }
+
+                setTimeBlocks(prevBlocks => ({
+                    ...prevBlocks,
+                    [selectedSchedule]: [
+                        ...(prevBlocks[selectedSchedule] || []),
+                        newBlock,
+                    ],
+                }))
+
+                setRecentBlockId(newBlock.id)
             }
 
-            setTimeBlocks(prevBlocks => ({
-                ...prevBlocks,
-                [selectedSchedule]: [
-                    ...(prevBlocks[selectedSchedule] || []),
-                    newBlock,
-                ],
-            }))
-
-            setRecentBlockId(newBlock.id)
-
+            // Clear states
             setCurrentBlock(null)
             setTimeIndicator('')
             setPointOfOrigin(null)
@@ -267,7 +421,6 @@ export const useTimeBlockPlacement = () => {
             document.removeEventListener('mousemove', handleMouseMove)
             document.removeEventListener('mouseup', handleMouseUp)
         }
-
         document.addEventListener('mousemove', handleMouseMove)
         document.addEventListener('mouseup', handleMouseUp)
 
@@ -284,5 +437,10 @@ export const useTimeBlockPlacement = () => {
         selectedSchedule,
     ])
 
-    return { handleMouseDown, blockProps, timeIndicator }
+    return {
+        handleMouseDown,
+        blockProps,
+        activeBlockId, // Return activeBlockId
+        timeIndicator,
+    }
 }

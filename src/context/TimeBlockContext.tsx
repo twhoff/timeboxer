@@ -4,16 +4,11 @@ import React, {
     useState,
     useMemo,
     useCallback,
-    useEffect,
 } from 'react'
-import {
-    loadTimeBlocks,
-    saveTimeBlocks,
-    loadSchedules,
-    saveSchedules,
-    type TimeBlock,
-    type Schedule,
-} from '../db'
+import { TimeBlock, Schedule } from '../db'
+import { useFetchSchedules } from '../controllers/useFetchSchedules'
+import { useLoadTimeBlocks } from '../controllers/useLoadTimeBlocks'
+import { useSaveData } from '../controllers/useSaveData'
 
 interface TimeBlockContextType {
     timeBlocks: Record<string, TimeBlock[]>
@@ -55,58 +50,9 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         null
     )
 
-    useEffect(() => {
-        const fetchSchedules = async () => {
-            const loadedSchedules = await loadSchedules()
-            setSchedules(loadedSchedules)
-            setSelectedSchedule(null)
-            loadedSchedules.forEach(schedule => {
-                if (schedule.isActive) {
-                    loadTimeBlocks(schedule.id).then(
-                        (loadedTimeBlocks: TimeBlock[]) => {
-                            setTimeBlocks(prevBlocks => ({
-                                ...prevBlocks,
-                                [schedule.id]: loadedTimeBlocks,
-                            }))
-                        }
-                    )
-                }
-            })
-        }
-        fetchSchedules()
-    }, [])
-
-    useEffect(() => {
-        const saveCurrentSchedules = async () => {
-            await saveSchedules(schedules)
-        }
-        saveCurrentSchedules()
-    }, [schedules])
-
-    useEffect(() => {
-        schedules.forEach(schedule => {
-            if (schedule.isActive && !(schedule.id in timeBlocks)) {
-                loadTimeBlocks(schedule.id).then(loadedTimeBlocks => {
-                    setTimeBlocks(prevBlocks => ({
-                        ...prevBlocks,
-                        [schedule.id]: loadedTimeBlocks,
-                    }))
-                })
-            }
-        })
-    }, [schedules, timeBlocks])
-
-    useEffect(() => {
-        if (selectedSchedule) {
-            const saveCurrentTimeBlocks = async () => {
-                await saveTimeBlocks(
-                    selectedSchedule,
-                    timeBlocks[selectedSchedule] || []
-                )
-            }
-            saveCurrentTimeBlocks()
-        }
-    }, [timeBlocks, selectedSchedule])
+    useFetchSchedules(setSchedules, setSelectedSchedule, setTimeBlocks)
+    useLoadTimeBlocks(schedules, setTimeBlocks)
+    useSaveData(schedules, timeBlocks, selectedSchedule)
 
     const clearAllBlocks = useCallback(() => {
         if (selectedSchedule) {
