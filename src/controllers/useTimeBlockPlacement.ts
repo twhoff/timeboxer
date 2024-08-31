@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTimeBlockContext } from '../context/TimeBlockContext'
 import { v4 as uuidv4 } from 'uuid'
 import type { TimeBlock } from '../db'
+import { formatTime, isDeleteButtonOrChild } from '../utils/timeBlockUtils'
 
 // Constants for layout
 const INTERVAL_HEIGHT = 40
@@ -49,15 +50,6 @@ export const useTimeBlockPlacement = () => {
         initialHeight: 0,
         initialTop: 0,
     })
-
-    const formatTime = (interval: number) => {
-        const totalMinutes = interval * 15
-        const hour = Math.floor(totalMinutes / 60)
-        const minutes = totalMinutes % 60
-        const period = hour >= 12 ? 'PM' : 'AM'
-        const formattedHour = hour % 12 === 0 ? 12 : hour % 12
-        return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
-    }
 
     useEffect(() => {
         const dayColumns = Array.from(document.querySelectorAll('.day-column'))
@@ -176,21 +168,6 @@ export const useTimeBlockPlacement = () => {
                 document.addEventListener('mouseup', handleDragMouseUp)
             }
         } else {
-            const isDeleteButtonOrChild = (
-                element: HTMLElement | null
-            ): boolean => {
-                while (element) {
-                    if (
-                        element.tagName.toLowerCase() === 'button' &&
-                        element.classList.contains('bin-icon')
-                    ) {
-                        return true
-                    }
-                    element = element.parentElement
-                }
-                return false
-            }
-
             if (isDeleteButtonOrChild(e.target as HTMLElement)) {
                 return
             }

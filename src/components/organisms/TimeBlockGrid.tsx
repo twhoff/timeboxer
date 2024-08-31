@@ -6,6 +6,12 @@ import { useTimeBlockPlacement } from '../../controllers/useTimeBlockPlacement'
 import { useConfetti } from '../../controllers/useConfetti'
 import { TimeBlockPreview } from '../molecules/TimeBlockPreview'
 import { type TimeBlock as TimeBlockType } from '../../db'
+import {
+    formatTime,
+    getTimeBlockStyle,
+    shouldRenderBlock,
+    isButtonOrChild,
+} from '../../utils/timeBlockUtils'
 
 const daysOfWeek = [
     'Monday',
@@ -89,16 +95,6 @@ export const TimeBlockGrid: React.FC = () => {
             return
         }
         console.log(`Mouse down on day column: ${daysOfWeek[dayIndex]}`)
-        const isButtonOrChild = (element: HTMLElement | null): boolean => {
-            while (element) {
-                if (element.tagName.toLowerCase() === 'button') {
-                    console.log('Detected click on a button, ignoring.')
-                    return true
-                }
-                element = element.parentElement
-            }
-            return false
-        }
         if (isButtonOrChild(e.target as HTMLElement)) {
             console.log(
                 'Click event originated from a button or its child; stopping propagation.'
@@ -156,15 +152,6 @@ export const TimeBlockGrid: React.FC = () => {
         return schedules.find(schedule => schedule.id === id)
     }
 
-    const formatTime = (interval: number) => {
-        const totalMinutes = interval * 15
-        const hour = Math.floor(totalMinutes / 60)
-        const minutes = totalMinutes % 60
-        const period = hour >= 12 ? 'PM' : 'AM'
-        const formattedHour = hour % 12 === 0 ? 12 : hour % 12
-        return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
-    }
-
     const renderTimeBlocks = (
         scheduleId: string,
         opacity: number,
@@ -175,16 +162,12 @@ export const TimeBlockGrid: React.FC = () => {
         const scheduleColor = scheduleDetails?.color
         const scheduleBgColor = scheduleDetails?.bgColor
 
-        const getTimeBlockStyle = (block: TimeBlockType) => ({
-            top: block.start * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
-            height: (block.end - block.start) * (INTERVAL_HEIGHT / 4),
-        })
-
-        const shouldRenderBlock = (block: TimeBlockType) =>
-            block.id !== activeBlockId || !isResizing.current
-
         const renderBlock = (block: TimeBlockType) => {
-            const { top, height } = getTimeBlockStyle(block)
+            const { top, height } = getTimeBlockStyle(
+                block,
+                INTERVAL_HEIGHT,
+                HEADER_HEIGHT
+            )
             const timeRange = `${formatTime(block.start)} - ${formatTime(block.end)}`
 
             return (
@@ -216,7 +199,12 @@ export const TimeBlockGrid: React.FC = () => {
             timeBlocks[scheduleId]
                 ?.filter(
                     block =>
-                        block.dayIndex === dayIndex && shouldRenderBlock(block)
+                        block.dayIndex === dayIndex &&
+                        shouldRenderBlock(
+                            block,
+                            activeBlockId,
+                            isResizing.current
+                        )
                 )
                 .map(renderBlock) || []
         )
