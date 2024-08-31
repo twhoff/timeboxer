@@ -45,7 +45,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
     const { selectedSchedule, setSelectedSchedule } = useTimeBlockContext()
     const [isUnlocked, setIsUnlocked] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
-    const [cursorStyle, setCursorStyle] = useState<string>('default')
+    const [localCursorStyle, setLocalCursorStyle] = useState<string>('default')
     const blockRef = useRef<HTMLDivElement | null>(null)
 
     const isSelectedSchedule = selectedSchedule === scheduleId
@@ -62,12 +62,40 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
         }
     }, [isSelectedSchedule])
 
-    // Add a useEffect to log blockProps
     useEffect(() => {
         if (blockProps) {
             console.log('Rendering TimeBlock with:', blockProps)
         }
     }, [blockProps])
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.metaKey && e.shiftKey) {
+                document.body.style.cursor = 'grab'
+                setLocalCursorStyle('grab')
+            } else if (e.metaKey) {
+                document.body.style.cursor = 'ew-resize'
+                setLocalCursorStyle('ew-resize')
+            } else {
+                document.body.style.cursor = 'default'
+                setLocalCursorStyle('default')
+            }
+        }
+
+        const handleKeyUp = () => {
+            document.body.style.cursor = 'default'
+            setLocalCursorStyle('default')
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        window.addEventListener('keyup', handleKeyUp)
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+            window.removeEventListener('keyup', handleKeyUp)
+            document.body.style.cursor = 'default' // Reset on component unmount
+        }
+    }, [])
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const blockRect = blockRef.current?.getBoundingClientRect()
@@ -78,10 +106,13 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
         const isNearBottom =
             blockRect.height - mouseYRelativeToBlock <= RESIZE_THRESHOLD
 
-        if (isNearTop || isNearBottom) {
-            setCursorStyle('ns-resize')
-        } else {
-            setCursorStyle('default')
+        if (!e.metaKey && !e.shiftKey) {
+            // Apply local cursor logic only when CMD or CMD+SHIFT aren't pressed
+            if (isNearTop || isNearBottom) {
+                setLocalCursorStyle('ns-resize')
+            } else {
+                setLocalCursorStyle('default')
+            }
         }
     }
 
@@ -116,7 +147,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
                     zIndex,
                     position: 'relative',
                     overflow: 'hidden',
-                    cursor: cursorStyle,
+                    cursor: localCursorStyle,
                 }}
             >
                 {isHovered && (

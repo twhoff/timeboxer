@@ -70,9 +70,11 @@ export const useTimeBlockPlacement = () => {
                 document.querySelectorAll('.day-column')
             ).indexOf(target)
             currentDayIndexRef.current = index
+            console.log('Current day index: ', currentDayIndexRef.current)
         }
         const handleMouseLeave = () => {
             currentDayIndexRef.current = null
+            console.log('Leaving day column')
         }
         dayColumns.forEach(column => {
             column.addEventListener(
