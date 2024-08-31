@@ -26,7 +26,7 @@ const hexToRgba = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export const TimeBlock: React.FC<TimeBlockProps> = ({
+const TimeBlockComponent: React.FC<TimeBlockProps> = ({
     blockId,
     top,
     height,
@@ -283,3 +283,5 @@ export const TimeBlock: React.FC<TimeBlockProps> = ({
         </div>
     )
 }
+
+export const TimeBlock = React.memo(TimeBlockComponent)

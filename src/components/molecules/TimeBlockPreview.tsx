@@ -17,7 +17,7 @@ const hexToRgba = (hex: string, alpha: number) => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export const TimeBlockPreview: React.FC<TimeBlockPreviewProps> = ({
+const TimeBlockPreviewComponent: React.FC<TimeBlockPreviewProps> = ({
     blockProps,
     bgColor = '#e0e0e0',
     color = '#007bff', // Default color
@@ -52,3 +52,5 @@ export const TimeBlockPreview: React.FC<TimeBlockPreviewProps> = ({
         </div>
     )
 }
+
+export const TimeBlockPreview = React.memo(TimeBlockPreviewComponent)
