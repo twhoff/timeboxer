@@ -5,6 +5,7 @@ import { IntervalLine } from '../atoms/IntervalLine'
 import { useTimeBlockPlacement } from '../../controllers/useTimeBlockPlacement'
 import { useConfetti } from '../../controllers/useConfetti'
 import { TimeBlockPreview } from '../molecules/TimeBlockPreview'
+import { type TimeBlock as TimeBlockType } from '../../db'
 
 const daysOfWeek = [
     'Monday',
@@ -173,50 +174,51 @@ export const TimeBlockGrid: React.FC = () => {
         const scheduleDetails = getScheduleDetails(scheduleId)
         const scheduleColor = scheduleDetails?.color
         const scheduleBgColor = scheduleDetails?.bgColor
+
+        const getTimeBlockStyle = (block: TimeBlockType) => ({
+            top: block.start * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT,
+            height: (block.end - block.start) * (INTERVAL_HEIGHT / 4),
+        })
+
+        const shouldRenderBlock = (block: TimeBlockType) =>
+            block.id !== activeBlockId || !isResizing.current
+
+        const renderBlock = (block: TimeBlockType) => {
+            const { top, height } = getTimeBlockStyle(block)
+            const timeRange = `${formatTime(block.start)} - ${formatTime(block.end)}`
+
+            return (
+                <div key={block.id}>
+                    {block.id !== null && (
+                        <TimeBlock
+                            blockId={block.id}
+                            scheduleId={scheduleId}
+                            className={
+                                block.id === bouncingBlockId ? 'bouncing' : ''
+                            }
+                            top={top}
+                            height={height}
+                            onDelete={e =>
+                                deleteTimeBlock(dayIndex, block.id, e)
+                            }
+                            color={scheduleColor}
+                            bgColor={scheduleBgColor}
+                            opacity={opacity}
+                            zIndex={zIndex}
+                            timeRange={timeRange}
+                        />
+                    )}
+                </div>
+            )
+        }
+
         return (
             timeBlocks[scheduleId]
-                ?.filter(block => block.dayIndex === dayIndex)
-                .map(block => {
-                    if (block.id === activeBlockId && isResizing.current) {
-                        return null // Skip rendering the active block
-                    }
-
-                    const startTime = formatTime(block.start)
-                    const endTime = formatTime(block.end)
-                    const timeRange = `${startTime} - ${endTime}`
-
-                    return (
-                        <div key={block.id}>
-                            {block.id !== null && (
-                                <TimeBlock
-                                    blockId={block.id}
-                                    scheduleId={scheduleId}
-                                    className={
-                                        block.id === bouncingBlockId
-                                            ? 'bouncing'
-                                            : ''
-                                    }
-                                    top={
-                                        block.start * (INTERVAL_HEIGHT / 4) +
-                                        HEADER_HEIGHT
-                                    }
-                                    height={
-                                        (block.end - block.start) *
-                                        (INTERVAL_HEIGHT / 4)
-                                    }
-                                    onDelete={e =>
-                                        deleteTimeBlock(dayIndex, block.id, e)
-                                    }
-                                    color={scheduleColor}
-                                    bgColor={scheduleBgColor}
-                                    opacity={opacity}
-                                    zIndex={zIndex}
-                                    timeRange={timeRange}
-                                />
-                            )}
-                        </div>
-                    )
-                }) || []
+                ?.filter(
+                    block =>
+                        block.dayIndex === dayIndex && shouldRenderBlock(block)
+                )
+                .map(renderBlock) || []
         )
     }
 
