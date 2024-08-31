@@ -115,3 +115,58 @@
 ### Dependencies
 
 -   Installed necessary ESLint and Prettier plugins and configurations.
+
+## Recent Changes
+
+### Components
+
+-   **`TimeBlock.tsx`**:
+
+    -   Introduced `useRef` for block reference and cursor management.
+    -   Added `blockId` prop and `blockProps` for enhanced block handling.
+    -   Implemented `handleMouseMove` for resizing interactions.
+    -   Wrapped delete and note buttons in a conditional rendering based on `isSelectedSchedule`.
+
+-   **`TimeBlockPreview.tsx`**:
+
+    -   Refactored to `TimeBlockPreviewComponent` and memoized for performance.
+
+-   **`TimeBlockGrid.tsx`**:
+    -   Imported utility functions from `timeBlockUtils` for cleaner code.
+    -   Enhanced block rendering logic to support resizing and duplication.
+    -   Integrated `useRef` for managing resizing state.
+    -   Centralized block rendering logic using a helper function.
+    -   Improved performance and maintainability by refactoring repetitive logic.
+
+### Context
+
+-   **`TimeBlockContext.tsx`**:
+    -   Removed inline `useEffect` hooks and replaced with custom hooks (`useFetchSchedules`, `useLoadTimeBlocks`, `useSaveData`) for better separation of concerns and code readability.
+
+### Controllers
+
+-   **`useTimeBlockPlacement.ts`**:
+
+    -   Introduced constants and utilities for resizing and placement logic.
+    -   Enhanced mouse event logic to handle block resizing.
+    -   Utilised `resizeStateRef` for managing resize state.
+    -   Added logic for duplicating blocks across days using CMD + Click.
+
+-   **Added**:
+    -   **`useFetchSchedules.ts`**: Custom hook to load schedules and associated time blocks.
+    -   **`useLoadTimeBlocks.ts`**: Custom hook for loading time blocks based on active schedules.
+    -   **`useSaveData.ts`**: Custom hook to save schedules and time blocks persistently.
+
+### DB
+
+-   **`db.ts`**: Added console logging for saved time blocks to aid debugging.
+
+### Utilities
+
+-   **Added `timeBlockUtils.ts`**:
+    -   Centralized utility functions for block formatting, styling, and event handling.
+
+### Documentation
+
+-   **`README.md`**:
+    -   Removed redundant sections to streamline content and improve focus on current features and instructions.

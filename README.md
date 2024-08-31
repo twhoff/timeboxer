@@ -6,7 +6,7 @@ The Time Blocking App is designed to help users manage their time efficiently by
 
 ## Current State
 
-### Output of `tree /Users/thoffmann/Desktop/timeboxer -I 'node_modules|dist|.*'`:
+### Project Structure
 
 ```
 /Users/thoffmann/Desktop/timeboxer
@@ -36,15 +36,19 @@ The Time Blocking App is designed to help users manage their time efficiently by
 │   │   └── TimeBlockContext.tsx
 │   ├── controllers
 │   │   ├── useConfetti.ts
+│   │   ├── useFetchSchedules.ts
+│   │   ├── useLoadTimeBlocks.ts
+│   │   ├── useSaveData.ts
 │   │   └── useTimeBlockPlacement.ts
 │   ├── db.ts
 │   ├── index.tsx
 │   └── utils
-│       └── colorGenerator.ts
+│       ├── colorGenerator.ts
+│       └── timeBlockUtils.ts
 ├── tsconfig.json
 └── yarn.lock
 
-10 directories, 24 files
+10 directories, 28 files
 ```
 
 ## Time Blocker Project - Key File Summaries
@@ -86,7 +90,13 @@ The Time Blocking App is designed to help users manage their time efficiently by
     -   Integrates with `useTimeBlockContext` for reflecting changes in the global state.
 -   **Technologies**: A custom React hook that leverages mouse event handling and UUID generation for unique identifiers.
 
-These files collectively underpin the functionality of the Time Blocker project, handling everything from data persistence to user interactions and state management, ensuring a cohesive and dynamic user experience.
+### `timeBlockUtils.ts`
+
+-   **Purpose**: Contains utility functions to support time block operations.
+-   **Key Features**:
+    -   Provides functions for formatting time intervals and managing block styles.
+    -   Includes helper functions to ensure correct event handling.
+-   **Technologies**: JavaScript utilities to facilitate component logic.
 
 ### Core Features Implemented
 
@@ -102,3 +112,4 @@ These files collectively underpin the functionality of the Time Blocker project,
 -   **Tooling Setup**: Configured ESLint and Prettier for consistent code quality, ensuring a uniform coding standard across the project.
 -   **CSS Layout Updates**: Utilised CSS variables for improved consistency and maintainability, setting a foundation for future theming and design tokens.
 -   **Performance Enhancements**: Refactored components like `TimeBlockGrid` and `TimeBlock` for better readability and performance, ensuring smoother user experiences.
+-   **Resizing and Duplication Logic**: Enhanced user interactions for resizing blocks and duplicating across days using CMD + Click for improved flexibility.
