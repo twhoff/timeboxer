@@ -9,6 +9,12 @@ export const formatTime = (interval: number): string => {
     return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes}${period}`
 }
 
+export const calculateTimeRange = (start: number, end: number) => {
+    return `${formatTime(Math.min(start, end))} - ${formatTime(
+        Math.max(start, end)
+    )}`
+}
+
 export const getTimeBlockStyle = (
     block: TimeBlockType,
     intervalHeight: number,

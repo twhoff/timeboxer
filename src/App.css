@@ -39,7 +39,7 @@ body {
 
 .sidebar {
     position: relative;
-    min-width: 200px;
+    min-width: 236px;
     width: 20vw;
     background-color: var(--secondary-color);
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);

@@ -34,6 +34,7 @@ const TimeBlockPreviewComponent: React.FC<TimeBlockPreviewProps> = ({
                 height: `${height}px`,
                 position: 'absolute',
                 backgroundColor: hexToRgba(bgColor, 0.8), // Apply opacity
+                zIndex: 100,
             }}
             data-testid="time-block-preview"
         >
