@@ -3,15 +3,10 @@ import { useTimeBlockContext } from '../../context/TimeBlockContext'
 import { TimeBlock } from '../molecules/TimeBlock'
 import { IntervalLine } from '../atoms/IntervalLine'
 import { useTimeBlockPlacement } from '../../controllers/useTimeBlockPlacement'
-import { useConfetti } from '../../controllers/useConfetti'
 import { TimeBlockPreview } from '../molecules/TimeBlockPreview'
-import { type TimeBlock as TimeBlockType } from '../../db'
-import {
-    formatTime,
-    getTimeBlockStyle,
-    shouldRenderBlock,
-    isButtonOrChild,
-} from '../../utils/timeBlockUtils'
+import { Schedule, type TimeBlock as TimeBlockType } from '../../db'
+import { formatTime, shouldRenderBlock } from '../../utils/timeBlockUtils'
+import { calculateBlockProps } from '../../utils/blockUtils'
 
 const daysOfWeek = [
     'Monday',
@@ -23,28 +18,24 @@ const daysOfWeek = [
     'Sunday',
 ]
 
-const INTERVAL_HEIGHT = 40
-const HEADER_HEIGHT = 30
+const RESIZE_THRESHOLD = 5
 
 export const TimeBlockGrid: React.FC = () => {
     const {
+        currentBlock,
         timeBlocks,
-        setTimeBlocks,
         recentBlockId,
         selectedSchedule,
         schedules,
     } = useTimeBlockContext()
-    const { handleMouseDown, blockProps, activeBlockId } =
-        useTimeBlockPlacement()
-    const triggerConfetti = useConfetti()
-    const [activeDay, setActiveDay] = useState<number | null>(null)
+    const { handleMouseDown, timeBlockPreviewProps } = useTimeBlockPlacement()
     const [bouncingBlockId, setBouncingBlockId] = useState<string | null>(null)
-    const isResizing = useRef<boolean>(false)
     const gridRef = useRef<HTMLDivElement>(null)
+    const isResizingRef = useRef<boolean>(false)
+    const isRepositioningRef = useRef<boolean>(false)
 
     useEffect(() => {
         if (recentBlockId) {
-            console.log(`Most recent time block ID: ${recentBlockId}`)
             setBouncingBlockId(recentBlockId)
             const timer = setTimeout(() => {
                 setBouncingBlockId(null)
@@ -54,97 +45,72 @@ export const TimeBlockGrid: React.FC = () => {
         }
     }, [recentBlockId])
 
-    const deleteTimeBlock = (
+    const handleMouseDownOnTimeBlock = (
         dayIndex: number,
-        blockId: string,
-        e: React.MouseEvent<HTMLButtonElement>
+        e: React.MouseEvent<HTMLDivElement>,
+        blockId: string
     ) => {
         e.stopPropagation()
-        console.log(
-            `Deleting block with id: ${blockId} at dayIndex: ${dayIndex}`
-        )
-        const rect = e.currentTarget.getBoundingClientRect()
-        triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
 
-        setTimeBlocks(prevBlocks => {
-            const updatedBlocks = { ...prevBlocks }
+        if (!(e.target as HTMLElement).classList.contains('time-block')) return
 
-            Object.keys(updatedBlocks).forEach(scheduleId => {
-                updatedBlocks[scheduleId] = updatedBlocks[scheduleId].filter(
-                    block => block.id !== blockId
-                )
-            })
+        console.log('Mouse down on block', blockId)
 
-            return updatedBlocks
-        })
-    }
-
-    const handleMouseDownWithActiveDay = (
-        dayIndex: number,
-        e: React.MouseEvent<HTMLDivElement>
-    ) => {
-        isResizing.current = false
-        const RESIZE_THRESHOLD = 5
-        const target = e.target as HTMLElement
+        isResizingRef.current = false
         const isCmdClick = e.metaKey
-        const blockElement = target.closest('.time-block') as HTMLElement
-        const blockId = blockElement?.dataset.blockId
+        const isShiftClick = e.shiftKey
 
-        if (isCmdClick && blockElement) {
+        if (isCmdClick || (isCmdClick && isShiftClick)) {
+            isRepositioningRef.current = true
             handleMouseDown(dayIndex, e, blockId)
             return
         }
-        console.log(`Mouse down on day column: ${daysOfWeek[dayIndex]}`)
-        if (isButtonOrChild(e.target as HTMLElement)) {
-            console.log(
-                'Click event originated from a button or its child; stopping propagation.'
-            )
-            e.stopPropagation()
-            return
+
+        const blockElement = e.target as HTMLElement
+        const blockRect = blockElement.getBoundingClientRect()
+        const initialTop = blockRect.top
+        const initialHeight = blockRect.height
+        const mouseYRelativeToBlock = e.clientY - initialTop
+        let edge: 'top' | 'bottom' | null = null
+
+        console.log('Mouse Y relative to block', mouseYRelativeToBlock)
+        if (
+            mouseYRelativeToBlock <= RESIZE_THRESHOLD &&
+            mouseYRelativeToBlock >= 0
+        ) {
+            edge = 'top'
+        } else if (
+            initialHeight - mouseYRelativeToBlock <= RESIZE_THRESHOLD &&
+            mouseYRelativeToBlock >= 0
+        ) {
+            edge = 'bottom'
         }
 
-        if (target.closest('.time-block')) {
-            const blockRect = blockElement.getBoundingClientRect()
-            const initialTop = blockRect.top
-            const initialHeight = blockRect.height
-            const mouseYRelativeToBlock = e.clientY - initialTop
-            let edge: 'top' | 'bottom' | null = null
-            if (
-                mouseYRelativeToBlock <= RESIZE_THRESHOLD &&
-                mouseYRelativeToBlock >= 0
-            ) {
-                console.log('Click on top edge of time block for resizing')
-                edge = 'top'
-            } else if (
-                initialHeight - mouseYRelativeToBlock <= RESIZE_THRESHOLD &&
-                mouseYRelativeToBlock >= 0
-            ) {
-                console.log('Click on bottom edge of time block for resizing')
-                edge = 'bottom'
-            }
-            if (edge) {
-                isResizing.current = true
-                setActiveDay(dayIndex)
-                handleMouseDown(
-                    dayIndex,
-                    e,
-                    blockElement.dataset.blockId!,
-                    edge
-                )
-                return
-            }
-            console.log('Regular click on a time block, exiting handler')
+        if (edge) {
+            console.log('Resizing block', blockId)
+            console.log('Edge', edge)
+            isResizingRef.current = true
+            handleMouseDown(dayIndex, e, blockId, edge)
             return
         }
+    }
+
+    const handleMouseDownOnDayColumn = (
+        dayIndex: number,
+        e: React.MouseEvent<HTMLDivElement>
+    ) => {
+        e.stopPropagation()
+
+        if (!(e.target as HTMLElement).classList.contains('interval-line'))
+            return
+
+        console.log('selectedSchedule', selectedSchedule)
+
         if (!selectedSchedule) {
-            console.log('No schedule selected; showing alert.')
             alert('Please select a schedule before adding time blocks.')
             return
         }
-        console.log(
-            'Setting active day and proceeding with mouse down handling.'
-        )
-        setActiveDay(dayIndex)
+
         handleMouseDown(dayIndex, e)
     }
 
@@ -158,20 +124,30 @@ export const TimeBlockGrid: React.FC = () => {
         dayIndex: number,
         zIndex: number
     ) => {
-        const scheduleDetails = getScheduleDetails(scheduleId)
-        const scheduleColor = scheduleDetails?.color
-        const scheduleBgColor = scheduleDetails?.bgColor
+        const scheduleDetails: Schedule | undefined =
+            getScheduleDetails(scheduleId)
+
+        if (!scheduleDetails) {
+            console.error(
+                `No schedule found with id: ${scheduleId}, skipping rendering.`
+            )
+            return null
+        }
+
+        const scheduleColor = scheduleDetails.color
+        const scheduleBgColor = scheduleDetails.bgColor
 
         const renderBlock = (block: TimeBlockType) => {
-            const { top, height } = getTimeBlockStyle(
-                block,
-                INTERVAL_HEIGHT,
-                HEADER_HEIGHT
-            )
+            const { top, height } = calculateBlockProps(block.start, block.end)
             const timeRange = `${formatTime(block.start)} - ${formatTime(block.end)}`
 
             return (
-                <div key={block.id}>
+                <div
+                    key={block.id}
+                    onMouseDown={e =>
+                        handleMouseDownOnTimeBlock(dayIndex, e, block.id)
+                    }
+                >
                     {block.id !== null && (
                         <TimeBlock
                             blockId={block.id}
@@ -181,14 +157,12 @@ export const TimeBlockGrid: React.FC = () => {
                             }
                             top={top}
                             height={height}
-                            onDelete={e =>
-                                deleteTimeBlock(dayIndex, block.id, e)
-                            }
                             color={scheduleColor}
                             bgColor={scheduleBgColor}
                             opacity={opacity}
                             zIndex={zIndex}
                             timeRange={timeRange}
+                            dayIndex={dayIndex}
                         />
                     )}
                 </div>
@@ -202,8 +176,9 @@ export const TimeBlockGrid: React.FC = () => {
                         block.dayIndex === dayIndex &&
                         shouldRenderBlock(
                             block,
-                            activeBlockId,
-                            isResizing.current
+                            currentBlock?.id,
+                            isResizingRef.current,
+                            isRepositioningRef.current
                         )
                 )
                 .map(renderBlock) || []
@@ -216,7 +191,7 @@ export const TimeBlockGrid: React.FC = () => {
                 <div
                     key={dayIndex}
                     className="day-column"
-                    onMouseDown={e => handleMouseDownWithActiveDay(dayIndex, e)}
+                    onMouseDown={e => handleMouseDownOnDayColumn(dayIndex, e)}
                 >
                     <div className="day-header">{day}</div>
                     {Array.from({ length: 24 }).map((_, intervalIndex) => (
@@ -233,11 +208,10 @@ export const TimeBlockGrid: React.FC = () => {
                                 schedule.id === selectedSchedule ? 2 : 1
                             )
                     )}
-                    {(activeDay === dayIndex ||
-                        (activeDay === dayIndex && activeBlockId)) &&
-                        blockProps && (
+                    {currentBlock?.dayIndex === dayIndex &&
+                        timeBlockPreviewProps && (
                             <TimeBlockPreview
-                                blockProps={blockProps}
+                                {...timeBlockPreviewProps}
                                 bgColor={
                                     getScheduleDetails(selectedSchedule)
                                         ?.bgColor

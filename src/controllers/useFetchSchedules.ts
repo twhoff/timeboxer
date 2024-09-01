@@ -16,7 +16,6 @@ export const useFetchSchedules = (
     useEffect(() => {
         const fetchSchedules = async () => {
             const loadedSchedules = await loadSchedules()
-            console.log('Loaded schedules:', loadedSchedules)
 
             setSchedules(loadedSchedules)
             setSelectedSchedule(

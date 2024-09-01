@@ -58,7 +58,6 @@ export async function saveTimeBlocks(
     try {
         const db = await initDB()
         await db.put(TIME_BLOCK_STORE, timeBlocks, scheduleId)
-        console.log('Time blocks saved:', timeBlocks)
     } catch (error) {
         console.error('Failed to save time blocks:', error)
     }

@@ -170,3 +170,46 @@
 
 -   **`README.md`**:
     -   Removed redundant sections to streamline content and improve focus on current features and instructions.
+
+## [01-09-2024] - Latest Update
+
+### Components
+
+-   **`TimeBlock.tsx`**:
+    -   Introduced `useRef` for block reference and cursor management.
+    -   Added `dayIndex` prop to manage time blocks for specific days.
+    -   Implemented `handleMouseMove` to change cursor style when hovering near the top/bottom edges of a time block, enabling resizing interactions.
+    -   Replaced inline delete logic with a dedicated `handleDeleteClick` function, which triggers confetti on delete action and updates the time blocks state accordingly.
+-   **`TimeBlockPreview.tsx`**:
+    -   Refactored to remove the `blockProps` prop and directly accept `top`, `height`, and `timeRange` props for improved clarity and performance.
+-   **`TimeBlockGrid.tsx`**:
+    -   Enhanced mouse event handling to manage resizing and repositioning of time blocks more effectively.
+    -   Updated handling of mouse down events to support drag-and-drop functionality for time blocks, allowing for duplication and repositioning.
+    -   Simplified rendering logic by integrating a new `calculateBlockProps` utility function for determining block dimensions and positions.
+    -   Improved error handling and console logging for debugging schedule and block ID issues.
+
+### Context
+
+-   **`TimeBlockContext.tsx`**:
+    -   Removed inline `useEffect` hooks in favour of custom hooks for better separation of concerns and improved readability.
+
+### Controllers
+
+-   **`useTimeBlockPlacement.ts`**:
+    -   Refactored to improve control over the resizing and repositioning of time blocks, including new logic for handling event propagation and mouse movements.
+    -   Introduced references for managing the state of resizing, creating, duplicating, and repositioning time blocks.
+
+### Utility Functions
+
+-   **`timeBlockUtils.ts`**:
+    -   Updated `shouldRenderBlock` utility to account for both resizing and repositioning states, enhancing block visibility logic.
+
+### Constants
+
+-   **`constants.ts`**:
+    -   Added `RESIZE_THRESHOLD` constant for consistent handling of resizing interactions across components.
+
+### DB
+
+-   **`db.ts`**:
+    -   Streamlined save operations with improved error handling and logging.

@@ -15,20 +15,12 @@ export const calculateTimeRange = (start: number, end: number) => {
     )}`
 }
 
-export const getTimeBlockStyle = (
-    block: TimeBlockType,
-    intervalHeight: number,
-    headerHeight: number
-) => ({
-    top: block.start * (intervalHeight / 4) + headerHeight,
-    height: (block.end - block.start) * (intervalHeight / 4),
-})
-
 export const shouldRenderBlock = (
     block: TimeBlockType,
-    activeBlockId: string | null,
-    isResizing: boolean
-): boolean => block.id !== activeBlockId || !isResizing
+    activeBlockId: string | undefined,
+    isResizing: boolean,
+    isRepositioning: boolean
+): boolean => !(block.id === activeBlockId && (isResizing || isRepositioning))
 
 export const isButtonOrChild = (element: HTMLElement | null): boolean => {
     while (element) {

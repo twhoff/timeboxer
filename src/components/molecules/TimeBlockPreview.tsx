@@ -1,11 +1,9 @@
 import React from 'react'
 
 interface TimeBlockPreviewProps {
-    blockProps: {
-        top: number
-        height: number
-        timeRange: string
-    } | null
+    top: number
+    height: number
+    timeRange: string
     bgColor?: string
     color?: string // Ensure color prop is available
 }
@@ -18,40 +16,36 @@ const hexToRgba = (hex: string, alpha: number) => {
 }
 
 const TimeBlockPreviewComponent: React.FC<TimeBlockPreviewProps> = ({
-    blockProps,
+    top,
+    height,
+    timeRange,
     bgColor = '#e0e0e0',
     color = '#007bff', // Default color
-}) => {
-    if (!blockProps) return null
-
-    const { top, height, timeRange } = blockProps
-
-    return (
+}) => (
+    <div
+        className="time-block stretching dragging"
+        style={{
+            top: `${top}px`,
+            height: `${height}px`,
+            position: 'absolute',
+            backgroundColor: hexToRgba(bgColor, 0.8), // Apply opacity
+            zIndex: 100,
+        }}
+        data-testid="time-block-preview"
+    >
         <div
-            className="time-block stretching dragging"
+            className="time-indicator"
+            data-testid="time-block-time-indicator"
             style={{
-                top: `${top}px`,
-                height: `${height}px`,
-                position: 'absolute',
-                backgroundColor: hexToRgba(bgColor, 0.8), // Apply opacity
-                zIndex: 100,
+                backgroundColor: bgColor,
+                color: color,
+                borderTopColor: color,
+                borderRightColor: color,
             }}
-            data-testid="time-block-preview"
         >
-            <div
-                className="time-indicator"
-                data-testid="time-block-time-indicator"
-                style={{
-                    backgroundColor: bgColor,
-                    color: color,
-                    borderTopColor: color,
-                    borderRightColor: color,
-                }}
-            >
-                {timeRange}
-            </div>
+            {timeRange}
         </div>
-    )
-}
+    </div>
+)
 
 export const TimeBlockPreview = React.memo(TimeBlockPreviewComponent)

@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
+import { useConfetti } from '../../controllers/useConfetti'
+import { RESIZE_THRESHOLD } from '../../constants/constants'
 
 interface TimeBlockProps {
     blockId: string
     top: number
     height: number
-    onDelete: React.MouseEventHandler<HTMLButtonElement>
     className?: string
     color?: string
     bgColor?: string
@@ -17,6 +18,7 @@ interface TimeBlockProps {
         top: number
         height: number
     }
+    dayIndex: number
 }
 
 const hexToRgba = (hex: string, alpha: number) => {
@@ -30,7 +32,6 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
     blockId,
     top,
     height,
-    onDelete,
     className = '',
     color = '#007bff',
     bgColor = '#e0e0e0',
@@ -38,11 +39,10 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
     zIndex = 1,
     scheduleId,
     timeRange,
-    blockProps,
 }) => {
-    const RESIZE_THRESHOLD = 5
-
-    const { selectedSchedule, setSelectedSchedule } = useTimeBlockContext()
+    const triggerConfetti = useConfetti()
+    const { setTimeBlocks, selectedSchedule, setSelectedSchedule } =
+        useTimeBlockContext()
     const [isUnlocked, setIsUnlocked] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
     const [localCursorStyle, setLocalCursorStyle] = useState<string>('default')
@@ -56,17 +56,51 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
         setSelectedSchedule(scheduleId)
     }
 
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const blockRect = blockRef.current?.getBoundingClientRect()
+        if (!blockRect) return
+
+        const mouseYRelativeToBlock = e.clientY - blockRect.top
+        const isNearTop = mouseYRelativeToBlock <= RESIZE_THRESHOLD
+        const isNearBottom =
+            blockRect.height - mouseYRelativeToBlock <= RESIZE_THRESHOLD
+
+        if (!e.metaKey && !e.shiftKey) {
+            // Apply local cursor logic only when CMD or CMD+SHIFT aren't pressed
+            if (isNearTop || isNearBottom) {
+                setLocalCursorStyle('ns-resize')
+            } else {
+                setLocalCursorStyle('default')
+            }
+        }
+    }
+
+    const handleDeleteClick = (
+        blockId: string,
+        e: React.MouseEvent<HTMLButtonElement>
+    ) => {
+        e.stopPropagation()
+        const rect = e.currentTarget.getBoundingClientRect()
+        triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
+
+        setTimeBlocks(prevBlocks => {
+            const updatedBlocks = { ...prevBlocks }
+
+            Object.keys(updatedBlocks).forEach(scheduleId => {
+                updatedBlocks[scheduleId] = updatedBlocks[scheduleId].filter(
+                    block => block.id !== blockId
+                )
+            })
+
+            return updatedBlocks
+        })
+    }
+
     useEffect(() => {
         if (!isSelectedSchedule) {
             setIsUnlocked(false)
         }
     }, [isSelectedSchedule])
-
-    useEffect(() => {
-        if (blockProps) {
-            console.log('Rendering TimeBlock with:', blockProps)
-        }
-    }, [blockProps])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,25 +131,6 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
         }
     }, [])
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const blockRect = blockRef.current?.getBoundingClientRect()
-        if (!blockRect) return
-
-        const mouseYRelativeToBlock = e.clientY - blockRect.top
-        const isNearTop = mouseYRelativeToBlock <= RESIZE_THRESHOLD
-        const isNearBottom =
-            blockRect.height - mouseYRelativeToBlock <= RESIZE_THRESHOLD
-
-        if (!e.metaKey && !e.shiftKey) {
-            // Apply local cursor logic only when CMD or CMD+SHIFT aren't pressed
-            if (isNearTop || isNearBottom) {
-                setLocalCursorStyle('ns-resize')
-            } else {
-                setLocalCursorStyle('default')
-            }
-        }
-    }
-
     return (
         <div
             data-testid="time-block-wrapper"
@@ -124,7 +139,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
             onMouseLeave={() => setIsHovered(false)}
             style={{
                 position: 'absolute',
-                top: blockProps?.top ?? top - 10,
+                top: top - 10,
                 left: '-10px',
                 right: '-10px',
                 padding: '10px',
@@ -139,7 +154,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
                 onMouseMove={handleMouseMove}
                 data-block-id={blockId}
                 style={{
-                    height: blockProps?.height ?? height,
+                    height: height,
                     backgroundColor: hexToRgba(bgColor, opacity),
                     borderColor,
                     borderWidth: '1px',
@@ -212,7 +227,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
                             className="bin-icon"
                             onClick={e => {
                                 e.stopPropagation()
-                                onDelete(e)
+                                handleDeleteClick(blockId, e)
                             }}
                             aria-label="Delete time block"
                             style={{

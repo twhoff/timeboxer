@@ -16,39 +16,45 @@ The Time Blocking App is designed to help users manage their time efficiently by
 ├── eslint.config.mjs
 ├── package.json
 ├── public
-│   └── index.html
+│   └── index.html
 ├── src
-│   ├── App.css
-│   ├── App.tsx
-│   ├── components
-│   │   ├── atoms
-│   │   │   ├── IntervalLine.tsx
-│   │   │   ├── TimeHeader.tsx
-│   │   │   └── TimeLabel.tsx
-│   │   ├── molecules
-│   │   │   ├── ScaleColumn.tsx
-│   │   │   ├── TimeBlock.tsx
-│   │   │   └── TimeBlockPreview.tsx
-│   │   └── organisms
-│   │       ├── Sidebar.tsx
-│   │       └── TimeBlockGrid.tsx
-│   ├── context
-│   │   └── TimeBlockContext.tsx
-│   ├── controllers
-│   │   ├── useConfetti.ts
-│   │   ├── useFetchSchedules.ts
-│   │   ├── useLoadTimeBlocks.ts
-│   │   ├── useSaveData.ts
-│   │   └── useTimeBlockPlacement.ts
-│   ├── db.ts
-│   ├── index.tsx
-│   └── utils
-│       ├── colorGenerator.ts
-│       └── timeBlockUtils.ts
+│   ├── App.css
+│   ├── App.tsx
+│   ├── components
+│   │   ├── atoms
+│   │   │   ├── IntervalLine.tsx
+│   │   │   ├── TimeHeader.tsx
+│   │   │   └── TimeLabel.tsx
+│   │   ├── molecules
+│   │   │   ├── ScaleColumn.tsx
+│   │   │   ├── TimeBlock.tsx
+│   │   │   └── TimeBlockPreview.tsx
+│   │   └── organisms
+│   │       ├── Sidebar.tsx
+│   │       └── TimeBlockGrid.tsx
+│   ├── constants
+│   │   └── constants.ts
+│   ├── context
+│   │   └── TimeBlockContext.tsx
+│   ├── controllers
+│   │   ├── useConfetti.ts
+│   │   ├── useCreateTimeBlock.ts
+│   │   ├── useFetchSchedules.ts
+│   │   ├── useLoadTimeBlocks.ts
+│   │   ├── useSaveData.ts
+│   │   └── useTimeBlockPlacement.ts
+│   ├── db.ts
+│   ├── index.tsx
+│   └── utils
+│       ├── blockUtils.ts
+│       ├── colorGenerator.ts
+│       ├── eventUtils.ts
+│       ├── mouseUtils.ts
+│       └── timeBlockUtils.ts
 ├── tsconfig.json
 └── yarn.lock
 
-10 directories, 28 files
+11 directories, 33 files
 ```
 
 ## Time Blocker Project - Key File Summaries
