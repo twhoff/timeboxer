@@ -57,6 +57,7 @@ export const TimeBlockGrid: React.FC = () => {
         console.log('Mouse down on block', blockId)
 
         isResizingRef.current = false
+        isRepositioningRef.current = false
         const isCmdClick = e.metaKey
         const isShiftClick = e.shiftKey
 
