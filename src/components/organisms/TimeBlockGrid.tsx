@@ -60,8 +60,8 @@ export const TimeBlockGrid: React.FC = () => {
         const isCmdClick = e.metaKey
         const isShiftClick = e.shiftKey
 
-        if (isCmdClick || (isCmdClick && isShiftClick)) {
-            isRepositioningRef.current = true
+        if (isCmdClick) {
+            if (isCmdClick && isShiftClick) isRepositioningRef.current = true
             handleMouseDown(dayIndex, e, blockId)
             return
         }
