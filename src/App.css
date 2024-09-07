@@ -482,6 +482,64 @@ label {
 .note-icon:hover .tip {
     transform: translateY(3px); /* Tip extends out */
 }
+
+.note-bubble {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    padding: 10px;
+    background-color: var(--light-background);
+    border: 1px solid var(--primary-color);
+    border-radius: 50%; /* Make it round */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    animation: cloudAppear 0.5s ease-out forwards;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+@keyframes cloudAppear {
+    0% {
+        transform: scale(0.2);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(0.5);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.note-bubble textarea {
+    width: 80%;
+    height: 80px;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    color: inherit;
+    resize: none;
+    font-family: var(--font-family);
+    font-size: 1em;
+    line-height: 1.5em;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+/* Hover and Focus Effects */
+.note-bubble textarea:focus {
+    border: none; /* Remove border */
+    outline: none; /* Remove outline */
+    background-color: var(
+        --light-background-hover
+    ); /* Subtle background change on focus */
+}
+
 @media (max-width: 768px) {
     .app-container {
         width: 100vw;
@@ -498,5 +556,47 @@ label {
 
     .day-header {
         font-size: var(--font-size-header-mobile);
+    }
+    .note-bubble {
+        width: 180px; /* Adjust width for smaller screens */
+    }
+    .note-bubble textarea {
+        font-size: var(--font-size-small-mobile);
+    }
+}
+
+.bubble {
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+}
+
+.bubble-0 {
+    animation: fadeIn 0.1s ease-in forwards;
+    animation-delay: 0s;
+}
+
+.bubble-1 {
+    animation: fadeIn 0.1s ease-in forwards;
+    animation-delay: 0.05s;
+}
+
+.bubble-2 {
+    animation: fadeIn 0.1s ease-in forwards;
+    animation-delay: 0.1s;
+}
+
+.bubble-3 {
+    animation: fadeIn 0.1s ease-in forwards;
+    animation-delay: 0.15s;
+}
+
+.bubble-4 {
+    animation: fadeIn 0.1s ease-in forwards;
+    animation-delay: 0.2s;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
     }
 }

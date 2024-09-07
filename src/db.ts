@@ -2,6 +2,7 @@ import { openDB, IDBPDatabase, DBSchema } from 'idb'
 const DB_NAME = 'TimeBlockDB'
 const TIME_BLOCK_STORE = 'timeBlocks'
 const SCHEDULE_STORE = 'schedules'
+const NOTE_STORE = 'notes'
 const ROTATOR_STORE = 'colorGeneratorRotatorValueStore'
 const ROTATOR_KEY = 'colorGeneratorRotatorValue'
 export interface TimeBlock {
@@ -13,6 +14,12 @@ export interface TimeBlock {
     color: string
 }
 
+export interface Note {
+    id: string
+    timeBlockId: string
+    content: string
+}
+
 export interface Schedule {
     id: string
     name: string
@@ -20,10 +27,15 @@ export interface Schedule {
     color: string
     bgColor: string
 }
+
 interface TimeBlockDB extends DBSchema {
     [TIME_BLOCK_STORE]: {
         key: string
         value: TimeBlock[]
+    }
+    [NOTE_STORE]: {
+        key: string
+        value: Note
     }
     [SCHEDULE_STORE]: {
         key: string
@@ -34,12 +46,16 @@ interface TimeBlockDB extends DBSchema {
         value: number
     }
 }
+
 export async function initDB(): Promise<IDBPDatabase<TimeBlockDB>> {
-    return openDB<TimeBlockDB>(DB_NAME, 3, {
+    return openDB<TimeBlockDB>(DB_NAME, 4, {
         // Updated version number
         upgrade(db) {
             if (!db.objectStoreNames.contains(TIME_BLOCK_STORE)) {
                 db.createObjectStore(TIME_BLOCK_STORE)
+            }
+            if (!db.objectStoreNames.contains(NOTE_STORE)) {
+                db.createObjectStore(NOTE_STORE)
             }
             if (!db.objectStoreNames.contains(SCHEDULE_STORE)) {
                 db.createObjectStore(SCHEDULE_STORE)
@@ -71,6 +87,37 @@ export async function loadTimeBlocks(scheduleId: string): Promise<TimeBlock[]> {
     } catch (error) {
         console.error('Failed to load time blocks:', error)
         return []
+    }
+}
+
+export async function saveNote(note: Note): Promise<void> {
+    try {
+        const db = await initDB()
+        await db.put(NOTE_STORE, note, note.id)
+    } catch (error) {
+        console.error('Failed to save note:', error)
+    }
+}
+
+export async function loadNoteByTimeBlockId(
+    timeBlockId: string
+): Promise<Note | null> {
+    try {
+        const db = await initDB()
+        const allNotes = await db.getAll(NOTE_STORE)
+        return allNotes.find(note => note.timeBlockId === timeBlockId) || null
+    } catch (error) {
+        console.error('Failed to load note:', error)
+        return null
+    }
+}
+
+export async function deleteNoteById(noteId: string): Promise<void> {
+    try {
+        const db = await initDB()
+        await db.delete(NOTE_STORE, noteId)
+    } catch (error) {
+        console.error('Failed to delete note:', error)
     }
 }
 

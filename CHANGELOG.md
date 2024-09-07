@@ -1,5 +1,42 @@
 # Changelog
 
+## Add Note-Taking Feature
+
+### Components
+
+-   **`TimeBlock.tsx`**:
+
+    -   Integrated `NoteBubble` component for note-taking functionality.
+    -   Added logic to manage note visualization and interaction.
+    -   Updated hover logic to include note icons with interactive effects.
+
+-   **`NoteBubble.tsx`**:
+
+    -   Introduced as a new component to handle note creation and editing within time blocks.
+    -   Utilizes a cloud-like interface for notes with keyboard shortcuts for saving and closing.
+
+-   **`CloudShape.tsx`**:
+    -   Added as a new SVG component to render cloud-like shapes for notes.
+    -   Supports dynamic scaling and color customization.
+
+### Context
+
+-   **`TimeBlockContext.tsx`**:
+    -   Extended context to manage notes associated with time blocks.
+    -   Added `setNoteForTimeBlock` and `deleteNoteForTimeBlock` functions for note management.
+
+### Controllers
+
+-   **`useLoadTimeBlocks.ts`**:
+    -   Updated to include loading of notes associated with time blocks.
+    -   Integrated note state management alongside time block loading.
+
+### DB
+
+-   **`db.ts`**:
+    -   Introduced a new `NOTE_STORE` in IndexedDB to handle note persistence.
+    -   Added functions for saving, loading, and deleting notes.
+
 ## Fix Persistence
 
 ### Components
@@ -7,7 +44,7 @@
 -   **`TimeBlockGrid.tsx`**:
 
     -   Improved persistence mechanism and code refactoring.
-    -   Enhanced the `renderTimeBlocks` method to include formatted time ranges for better display clarity. Introduced the `formatTime` function for converting intervals to human-readable time strings.
+    -   Enhanced the `renderTimeBlocks` method to include formatted time ranges for better display clarity.
     -   Removed unnecessary `useEffect` and adjusted position calculations for time blocks.
 
 -   **`TimeBlock.tsx`**:

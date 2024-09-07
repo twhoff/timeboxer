@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
 import { useConfetti } from '../../controllers/useConfetti'
 import { RESIZE_THRESHOLD } from '../../constants/constants'
+import NoteBubble from '../organisms/NoteBubble' // Import the NoteBubble component
 
 interface TimeBlockProps {
     blockId: string
@@ -41,11 +42,13 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
     timeRange,
 }) => {
     const triggerConfetti = useConfetti()
-    const { setTimeBlocks, selectedSchedule, setSelectedSchedule } =
+    const { setTimeBlocks, selectedSchedule, setSelectedSchedule, notes } =
         useTimeBlockContext()
+    const [bubblePosition, setBubblePosition] = useState({ top: 0, left: 0 }) // State for bubble
     const [isUnlocked, setIsUnlocked] = useState(false)
     const [isHovered, setIsHovered] = useState(false)
     const [localCursorStyle, setLocalCursorStyle] = useState<string>('default')
+    const [isNoteBubbleVisible, setIsNoteBubbleVisible] = useState(false) // State for note bubble visibility
     const blockRef = useRef<HTMLDivElement | null>(null)
 
     const isSelectedSchedule = selectedSchedule === scheduleId
@@ -94,6 +97,22 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
 
             return updatedBlocks
         })
+    }
+
+    const handleNoteIconClick = () => {
+        const blockRect = blockRef.current?.getBoundingClientRect()
+        if (blockRect) {
+            const randomOffset = {
+                top: blockRect.top + window.scrollY + Math.random() * 50 - 25,
+                left: blockRect.left + window.scrollX + Math.random() * 50 - 25,
+            }
+            setBubblePosition(randomOffset)
+        }
+        setIsNoteBubbleVisible(true)
+    }
+
+    const closeNoteBubble = () => {
+        setIsNoteBubbleVisible(false)
     }
 
     useEffect(() => {
@@ -179,9 +198,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
                     </div>
                 )}
                 <button
-                    className={`padlock-icon ${
-                        isUnlocked ? 'unlocked fadeout' : ''
-                    } ${isSelectedSchedule ? 'hidden' : ''}`}
+                    className={`padlock-icon ${isUnlocked ? 'unlocked fadeout' : ''} ${isSelectedSchedule ? 'hidden' : ''}`}
                     onClick={handleLockClick}
                     aria-label="Toggle lock"
                     style={{
@@ -272,6 +289,7 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
                         </button>
                         <button
                             className="note-icon"
+                            onClick={handleNoteIconClick}
                             aria-label="Edit time block"
                             style={{
                                 position: 'absolute',
@@ -291,38 +309,57 @@ const TimeBlockComponent: React.FC<TimeBlockProps> = ({
                                 viewBox="0 0 64 64"
                                 width="16"
                                 height="16"
-                                className="mechanical-pencil"
+                                className={`mechanical-pencil ${notes[blockId] ? 'note-icon' : ''}`}
                             >
-                                <rect
-                                    x="28"
-                                    y="5"
-                                    width="8"
-                                    height="8"
-                                    rx="2"
-                                    ry="2"
-                                    fill="currentColor"
-                                    className="eraser"
-                                />
-                                <rect
-                                    x="28"
-                                    y="16"
-                                    width="8"
-                                    height="28"
-                                    fill="currentColor"
-                                    className="shaft"
-                                />
-                                <path
-                                    d="M28 44 L32 50 L36 44 L32 47"
-                                    fill="currentColor"
-                                    className="sheathe"
-                                />
-                                <path
-                                    d="M30 47 L32 54 L34 47"
-                                    fill="currentColor"
-                                    className="tip"
-                                />
+                                {notes[blockId] ? (
+                                    <path
+                                        d="M32 12 C28 12, 28 18, 32 18 C36 18, 36 12, 32 12 Z"
+                                        fill="currentColor"
+                                        className="note-icon"
+                                    />
+                                ) : (
+                                    <>
+                                        <rect
+                                            x="28"
+                                            y="5"
+                                            width="8"
+                                            height="8"
+                                            rx="2"
+                                            ry="2"
+                                            fill="currentColor"
+                                            className="eraser"
+                                        />
+                                        <rect
+                                            x="28"
+                                            y="16"
+                                            width="8"
+                                            height="28"
+                                            fill="currentColor"
+                                            className="shaft"
+                                        />
+                                        <path
+                                            d="M28 44 L32 50 L36 44 L32 47"
+                                            fill="currentColor"
+                                            className="sheathe"
+                                        />
+                                        <path
+                                            d="M30 47 L32 54 L34 47"
+                                            fill="currentColor"
+                                            className="tip"
+                                        />
+                                    </>
+                                )}
                             </svg>
                         </button>
+                        {isNoteBubbleVisible && (
+                            <NoteBubble
+                                timeBlockId={blockId}
+                                color={color}
+                                bgColor={bgColor}
+                                onClose={closeNoteBubble}
+                                position={bubblePosition} // Pass the calculated position
+                            />
+                        )}
                     </>
                 )}
             </div>

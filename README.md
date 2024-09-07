@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-The Time Blocking App is designed to help users manage their time efficiently by allowing them to create and visualise time blocks across various days and intervals. The application offers an intuitive interface to facilitate effective time management.
+The Time Blocking App is designed to help users manage their time efficiently by allowing them to create and visualise time blocks across various days and intervals. The application offers an intuitive interface to facilitate effective time management, now with added functionality for note-taking within time blocks.
 
 ## Current State
 
@@ -16,45 +16,47 @@ The Time Blocking App is designed to help users manage their time efficiently by
 ├── eslint.config.mjs
 ├── package.json
 ├── public
-│   └── index.html
+│   └── index.html
 ├── src
-│   ├── App.css
-│   ├── App.tsx
-│   ├── components
-│   │   ├── atoms
-│   │   │   ├── IntervalLine.tsx
-│   │   │   ├── TimeHeader.tsx
-│   │   │   └── TimeLabel.tsx
-│   │   ├── molecules
-│   │   │   ├── ScaleColumn.tsx
-│   │   │   ├── TimeBlock.tsx
-│   │   │   └── TimeBlockPreview.tsx
-│   │   └── organisms
-│   │       ├── Sidebar.tsx
-│   │       └── TimeBlockGrid.tsx
-│   ├── constants
-│   │   └── constants.ts
-│   ├── context
-│   │   └── TimeBlockContext.tsx
-│   ├── controllers
-│   │   ├── useConfetti.ts
-│   │   ├── useCreateTimeBlock.ts
-│   │   ├── useFetchSchedules.ts
-│   │   ├── useLoadTimeBlocks.ts
-│   │   ├── useSaveData.ts
-│   │   └── useTimeBlockPlacement.ts
-│   ├── db.ts
-│   ├── index.tsx
-│   └── utils
-│       ├── blockUtils.ts
-│       ├── colorGenerator.ts
-│       ├── eventUtils.ts
-│       ├── mouseUtils.ts
-│       └── timeBlockUtils.ts
+│   ├── App.css
+│   ├── App.tsx
+│   ├── components
+│   │   ├── atoms
+│   │   │   ├── IntervalLine.tsx
+│   │   │   ├── TimeHeader.tsx
+│   │   │   └── TimeLabel.tsx
+│   │   ├── molecules
+│   │   │   ├── CloudShape.tsx
+│   │   │   ├── ScaleColumn.tsx
+│   │   │   ├── TimeBlock.tsx
+│   │   │   └── TimeBlockPreview.tsx
+│   │   └── organisms
+│   │       ├── NoteBubble.tsx
+│   │       ├── Sidebar.tsx
+│   │       └── TimeBlockGrid.tsx
+│   ├── constants
+│   │   └── constants.ts
+│   ├── context
+│   │   └── TimeBlockContext.tsx
+│   ├── controllers
+│   │   ├── useConfetti.ts
+│   │   ├── useCreateTimeBlock.ts
+│   │   ├── useFetchSchedules.ts
+│   │   ├── useLoadTimeBlocks.ts
+│   │   ├── useSaveData.ts
+│   │   └── useTimeBlockPlacement.ts
+│   ├── db.ts
+│   ├── index.tsx
+│   └── utils
+│       ├── blockUtils.ts
+│       ├── colorGenerator.ts
+│       ├── eventUtils.ts
+│       ├── mouseUtils.ts
+│       └── timeBlockUtils.ts
 ├── tsconfig.json
 └── yarn.lock
 
-11 directories, 33 files
+11 directories, 37 files
 ```
 
 ## Time Blocker Project - Key File Summaries
@@ -63,54 +65,46 @@ The Time Blocking App is designed to help users manage their time efficiently by
 
 -   **Purpose**: Manages data persistence for the application using IndexedDB.
 -   **Key Features**:
-    -   Defines data structures for `TimeBlock` and `Schedule`.
+    -   Defines data structures for `TimeBlock`, `Schedule`, and `Note`.
     -   Initializes the database with necessary stores.
-    -   Provides CRUD operations for time blocks and schedules.
+    -   Provides CRUD operations for time blocks, schedules, and notes.
     -   Manages a color rotation value for dynamic color assignment.
 -   **Technologies**: Utilizes the `idb` package for a promise-based IndexedDB interaction.
 
-### `TimeBlockGrid.tsx`
+### `NoteBubble.tsx`
 
--   **Purpose**: Serves as the primary UI component for displaying and interacting with time blocks.
+-   **Purpose**: Provides a UI component for creating and displaying notes associated with specific time blocks.
 -   **Key Features**:
-    -   Utilizes `useTimeBlockContext` for state management.
-    -   Handles user interactions for adding, deleting, and adjusting time blocks.
-    -   Dynamically renders time blocks with visual feedback (e.g., confetti on delete, bouncing animation).
--   **Technologies**: Built with React, integrating custom hooks like `useTimeBlockPlacement` and `useConfetti`.
+    -   Allows users to add and edit notes within a bubble interface.
+    -   Integrates with the `CloudShape` component for a visually appealing design.
+    -   Supports keyboard shortcuts for saving and closing notes.
+-   **Technologies**: Built with React, utilizing portals and hooks for effect management.
 
-### `TimeBlockContext.tsx`
+### `TimeBlock.tsx`
 
--   **Purpose**: Establishes a global state management system for time blocks and schedules.
+-   **Purpose**: Serves as a component for individual time block representation.
 -   **Key Features**:
-    -   Exports `useTimeBlockContext` hook for accessing the context.
-    -   Manages state for time blocks, schedules, and the selected schedule.
-    -   Implements persistence with loading and saving data to IndexedDB.
--   **Technologies**: Utilizes React Context and Hooks for effective state management across components.
+    -   Integrates `NoteBubble` for note-taking functionality.
+    -   Manages interactions for displaying and editing notes.
+    -   Utilizes context for state management of time blocks and notes.
+-   **Technologies**: Built with React, leveraging custom hooks and context for state management.
 
-### `useTimeBlockPlacement.ts`
+### `CloudShape.tsx`
 
--   **Purpose**: Manages the logic for placing and dragging time blocks within the grid.
+-   **Purpose**: Provides a visual SVG component used in the `NoteBubble`.
 -   **Key Features**:
-    -   Provides interactive logic for adding new blocks and adjusting existing ones.
-    -   Offers real-time visual feedback during drag operations.
-    -   Integrates with `useTimeBlockContext` for reflecting changes in the global state.
--   **Technologies**: A custom React hook that leverages mouse event handling and UUID generation for unique identifiers.
-
-### `timeBlockUtils.ts`
-
--   **Purpose**: Contains utility functions to support time block operations.
--   **Key Features**:
-    -   Provides functions for formatting time intervals and managing block styles.
-    -   Includes helper functions to ensure correct event handling.
--   **Technologies**: JavaScript utilities to facilitate component logic.
+    -   Renders multiple bubble shapes to create a cloud-like appearance.
+    -   Scales dynamically based on provided dimensions and colors.
+-   **Technologies**: React component utilizing SVG for vector graphics.
 
 ### Core Features Implemented
 
 -   **Bi-Directional Growth for Time Blocks**: Enables time blocks to expand or shrink in both directions for more flexible time management.
--   **Persistence Mechanism**: Enhanced to ensure the reliable storage and retrieval of time blocks, improving the application's usability across sessions.
+-   **Persistence Mechanism**: Enhanced to ensure the reliable storage and retrieval of time blocks and notes, improving application's usability across sessions.
 -   **Static Layout and Design Tokens**: Transitioned to a static layout using CSS variables for design tokens, facilitating easier theming and consistent styling.
 -   **Tooling and Quality Assurance**: Added ESLint and Prettier for code quality, along with TypeScript conversion for type safety, enhancing overall code maintainability and development experience.
 -   **Animation and UI Feedback**: Introduced animations for time blocks and added visual indicators (like confetti on certain actions), enriching the user interface and interaction feedback.
+-   **Note Management**: Allows users to create, edit, and delete notes associated with time blocks, providing an additional layer of functionality for time management.
 
 ### Recent Fixes and Improvements
 
@@ -119,3 +113,4 @@ The Time Blocking App is designed to help users manage their time efficiently by
 -   **CSS Layout Updates**: Utilised CSS variables for improved consistency and maintainability, setting a foundation for future theming and design tokens.
 -   **Performance Enhancements**: Refactored components like `TimeBlockGrid` and `TimeBlock` for better readability and performance, ensuring smoother user experiences.
 -   **Resizing and Duplication Logic**: Enhanced user interactions for resizing blocks and duplicating across days using CMD + Click for improved flexibility.
+-   **Note Feature Enhancement**: Implemented a new note-taking feature within time blocks, allowing for detailed annotations directly in the app.

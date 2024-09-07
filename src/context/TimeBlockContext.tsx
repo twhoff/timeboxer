@@ -5,10 +5,11 @@ import React, {
     useMemo,
     useCallback,
 } from 'react'
-import { TimeBlock, Schedule } from '../db'
+import type { TimeBlock, Schedule, Note } from '../db'
 import { useFetchSchedules } from '../controllers/useFetchSchedules'
 import { useLoadTimeBlocks } from '../controllers/useLoadTimeBlocks'
 import { useSaveData } from '../controllers/useSaveData'
+import { saveNote, deleteNoteById } from '../db'
 
 interface TimeBlockContextType {
     timeBlocks: Record<string, TimeBlock[]>
@@ -31,6 +32,9 @@ interface TimeBlockContextType {
         newStart: number,
         newEnd: number
     ) => void
+    notes: Record<string, Note | null>
+    setNoteForTimeBlock: (timeBlockId: string, content: string) => void
+    deleteNoteForTimeBlock: (timeBlockId: string) => void
 }
 
 export const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
@@ -49,9 +53,10 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     const [selectedSchedule, setSelectedSchedule] = useState<string | null>(
         null
     )
+    const [notes, setNotes] = useState<Record<string, Note | null>>({})
 
     useFetchSchedules(setSchedules, setSelectedSchedule, setTimeBlocks)
-    useLoadTimeBlocks(schedules, setTimeBlocks)
+    useLoadTimeBlocks(schedules, setTimeBlocks, setNotes) // Updated to include setNotes
     useSaveData(schedules, timeBlocks, selectedSchedule)
 
     const clearAllBlocks = useCallback(() => {
@@ -61,6 +66,7 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
                 [selectedSchedule]: [],
             }))
             setRecentBlockId(null)
+            setNotes({})
         }
     }, [selectedSchedule])
 
@@ -96,6 +102,31 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         []
     )
 
+    const setNoteForTimeBlock = useCallback(
+        async (timeBlockId: string, content: string) => {
+            if (content.trim() === '') {
+                await deleteNoteForTimeBlock(timeBlockId)
+                return
+            }
+            const note = { id: timeBlockId, timeBlockId, content }
+            setNotes(prevNotes => ({
+                ...prevNotes,
+                [timeBlockId]: note,
+            }))
+            await saveNote(note)
+        },
+        []
+    )
+
+    const deleteNoteForTimeBlock = useCallback(async (timeBlockId: string) => {
+        setNotes(prevNotes => {
+            const updatedNotes = { ...prevNotes }
+            delete updatedNotes[timeBlockId]
+            return updatedNotes
+        })
+        await deleteNoteById(timeBlockId)
+    }, [])
+
     const value = useMemo(
         () => ({
             timeBlocks,
@@ -110,6 +141,9 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             selectedSchedule,
             setSelectedSchedule,
             updateBlockPosition,
+            notes,
+            setNoteForTimeBlock,
+            deleteNoteForTimeBlock,
         }),
         [
             timeBlocks,
@@ -119,6 +153,7 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             schedules,
             selectedSchedule,
             updateBlockPosition,
+            notes,
         ]
     )
 
