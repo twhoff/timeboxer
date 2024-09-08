@@ -331,7 +331,7 @@ label {
 }
 
 .padlock-icon,
-.note-icon,
+.note-icon-button,
 .bin-icon {
     display: flex;
     justify-content: center;
@@ -348,7 +348,7 @@ label {
     opacity: 0;
 }
 .time-block:hover .padlock-icon,
-.time-block:hover .note-icon,
+.time-block:hover .note-icon-button,
 .time-block:hover .bin-icon {
     opacity: 1;
 }
@@ -406,7 +406,7 @@ label {
 
 .time-block.stretching {
     /* Adjust to align with hover effect */
-    transform: scaleY(1.05) scaleX(0.98);
+    transform: scaleX(0.98);
 }
 .time-block.bouncing {
     /* Adjust to align with hover effect */
@@ -467,7 +467,20 @@ label {
 
 .mechanical-pencil {
     transition: transform 0.3s ease-in-out;
-    transform: rotate(40deg); /* Rotate for diagonal alignment */
+    transform: rotate(40deg); /* Default rotation for diagonal alignment */
+}
+
+.mechanical-pencil.wiggle {
+    animation: wiggle 0.3s 1 alternate; /* Play once per key press */
+}
+
+@keyframes wiggle {
+    0% {
+        transform: rotate(35deg);
+    }
+    100% {
+        transform: rotate(45deg);
+    }
 }
 
 .eraser,
@@ -475,69 +488,12 @@ label {
     transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
-.note-icon:hover .eraser {
+.note-icon-button:hover .eraser {
     transform: translateY(4px); /* Eraser presses down */
 }
 
-.note-icon:hover .tip {
+.note-icon-button:hover .tip {
     transform: translateY(3px); /* Tip extends out */
-}
-
-.note-bubble {
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    padding: 10px;
-    background-color: var(--light-background);
-    border: 1px solid var(--primary-color);
-    border-radius: 50%; /* Make it round */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    animation: cloudAppear 0.5s ease-out forwards;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-@keyframes cloudAppear {
-    0% {
-        transform: scale(0.2);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(0.5);
-        opacity: 0.5;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.note-bubble textarea {
-    width: 80%;
-    height: 80px;
-    border: none;
-    outline: none;
-    background-color: transparent;
-    color: inherit;
-    resize: none;
-    font-family: var(--font-family);
-    font-size: 1em;
-    line-height: 1.5em;
-    padding: 0;
-    margin: 0;
-    text-align: center;
-}
-
-/* Hover and Focus Effects */
-.note-bubble textarea:focus {
-    border: none; /* Remove border */
-    outline: none; /* Remove outline */
-    background-color: var(
-        --light-background-hover
-    ); /* Subtle background change on focus */
 }
 
 @media (max-width: 768px) {
@@ -557,12 +513,6 @@ label {
     .day-header {
         font-size: var(--font-size-header-mobile);
     }
-    .note-bubble {
-        width: 180px; /* Adjust width for smaller screens */
-    }
-    .note-bubble textarea {
-        font-size: var(--font-size-small-mobile);
-    }
 }
 
 .bubble {
@@ -570,27 +520,27 @@ label {
     transition: opacity 0.1s ease-in;
 }
 
-.bubble-0 {
+.cloudXS {
     animation: fadeIn 0.1s ease-in forwards;
     animation-delay: 0s;
 }
 
-.bubble-1 {
+.cloudS {
     animation: fadeIn 0.1s ease-in forwards;
     animation-delay: 0.05s;
 }
 
-.bubble-2 {
+.cloudM {
     animation: fadeIn 0.1s ease-in forwards;
     animation-delay: 0.1s;
 }
 
-.bubble-3 {
+.cloudL {
     animation: fadeIn 0.1s ease-in forwards;
     animation-delay: 0.15s;
 }
 
-.bubble-4 {
+.cloudXL {
     animation: fadeIn 0.1s ease-in forwards;
     animation-delay: 0.2s;
 }

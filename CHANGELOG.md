@@ -1,5 +1,68 @@
 # Changelog
 
+## [Unreleased]
+
+### Components
+
+-   **`App.css`**:
+
+    -   Updated `.note-icon` to `.note-icon-button` for better specificity.
+    -   Refined styles for `.mechanical-pencil` with wiggle animation on key press.
+    -   Removed redundant styles for `.note-bubble` and adjusted styles for new `.cloud*` classes for fade-in animations.
+
+-   **`DeleteButton.tsx`**:
+
+    -   New atom component for rendering a delete button with SVG.
+
+-   **`LockButton.tsx`**:
+
+    -   New atom component for rendering a lock button with SVG.
+
+-   **`NoteButton.tsx`**:
+
+    -   New atom component for rendering a note button with SVG.
+    -   Handles note-related interactions with dynamic styles based on the state.
+
+-   **`TimeBlock.tsx`**:
+
+    -   Refactored to use new atom components: `LockButton`, `DeleteButton`, and `NoteButton`.
+    -   Integrated `useTimeBlockHandlers` to manage interactions and state.
+    -   Removed inline logic for mouse and key events, delegating them to a custom hook.
+
+-   **`NoteBubble.tsx`**:
+    -   Refined to use `bubblePosition` for more accurate positioning.
+    -   Added animation and transition for visibility and position changes.
+    -   Replaced `CloudShape` with direct styling for note display.
+
+### Context
+
+-   **`TimeBlockContext.tsx`**:
+    -   Introduced `useNotes` custom hook to manage notes state.
+    -   Removed inline `setNoteForTimeBlock` and `deleteNoteForTimeBlock` in favor of using the hook.
+
+### Controllers
+
+-   **`useLoadTimeBlocks.ts`**:
+
+    -   Updated to use `setNoteForTimeBlock` directly for managing notes during load.
+
+-   **`useNotes.ts`**:
+
+    -   New custom hook for managing notes, providing `setNoteForTimeBlock` and `deleteNoteForTimeBlock`.
+
+-   **`useTimeBlockHandlers.ts`**:
+    -   New custom hook to encapsulate logic for handling time block interactions such as locking, deleting, and note interactions.
+
+### Utilities
+
+-   **`colorGenerator.ts`**:
+    -   Added `hexToRgba` function for converting hex colors to RGBA format.
+
+### Removed
+
+-   **`CloudShape.tsx`**:
+    -   Removed SVG component as the note styling was simplified.
+
 ## Add Note-Taking Feature
 
 ### Components
@@ -53,22 +116,28 @@
 
 ### Context
 
--   **`TimeBlockContext.tsx`**: Added `useEffect` hooks for loading and saving time blocks to persistent storage.
+-   **`TimeBlockContext.tsx`**:
+    -   Added `useEffect` hooks for loading and saving time blocks to persistent storage.
 
 ### Controllers
 
--   **`useConfetti.ts`**: Refactored to improve confetti trigger logic.
+-   **`useConfetti.ts`**:
+
+    -   Refactored to improve confetti trigger logic.
+
 -   **`useTimeBlockPlacement.ts`**:
     -   Enhanced mouse event handling and introduced new logic to prevent event propagation from buttons.
     -   Updated type imports to maintain consistency with database schema.
 
 ### DB
 
--   **`db.ts`**: Streamlined load and save operations with better error handling.
+-   **`db.ts`**:
+    -   Streamlined load and save operations with better error handling.
 
 ### Index
 
--   **`index.tsx`**: Temporarily removed `React.StrictMode` for debugging.
+-   **`index.tsx`**:
+    -   Temporarily removed `React.StrictMode` for debugging.
 
 ## Add Time Block Bi-Directional Growth
 
@@ -105,6 +174,7 @@
 ### CSS
 
 -   Introduced design tokens using CSS variables for better maintainability and theming.
+
 -   **`App.css`**:
     -   Introduced `.time-block-wrapper` for improved layout management and hover effects.
     -   Added styles for `.note-icon` with interactive effects.
@@ -126,16 +196,20 @@
 
 ### Context
 
--   **`TimeBlockContext.tsx`**: Added TypeScript interfaces and types.
+-   **`TimeBlockContext.tsx`**:
+    -   Added TypeScript interfaces and types.
 
 ### DB
 
--   **`db.ts`**: Defined database schema and updated functions with TypeScript types.
+-   **`db.ts`**:
+    -   Defined database schema and updated functions with TypeScript types.
 
 ### Components
 
 -   Refactored components to include TypeScript types for props and state management.
--   **`TimeBlockPreview.tsx`**: Updated to include the `color` prop for enhanced styling consistency.
+
+-   **`TimeBlockPreview.tsx`**:
+    -   Updated to include the `color` prop for enhanced styling consistency.
 
 ## Add Some Tooling like ESLint and Prettier
 
@@ -196,7 +270,8 @@
 
 ### DB
 
--   **`db.ts`**: Added console logging for saved time blocks to aid debugging.
+-   **`db.ts`**:
+    -   Added console logging for saved time blocks to aid debugging.
 
 ### Utilities
 
@@ -213,12 +288,16 @@
 ### Components
 
 -   **`TimeBlock.tsx`**:
+
     -   Introduced `useRef` for block reference and cursor management.
     -   Added `dayIndex` prop to manage time blocks for specific days.
     -   Implemented `handleMouseMove` to change cursor style when hovering near the top/bottom edges of a time block, enabling resizing interactions.
     -   Replaced inline delete logic with a dedicated `handleDeleteClick` function, which triggers confetti on delete action and updates the time blocks state accordingly.
+
 -   **`TimeBlockPreview.tsx`**:
+
     -   Refactored to remove the `blockProps` prop and directly accept `top`, `height`, and `timeRange` props for improved clarity and performance.
+
 -   **`TimeBlockGrid.tsx`**:
     -   Enhanced mouse event handling to manage resizing and repositioning of time blocks more effectively.
     -   Updated handling of mouse down events to support drag-and-drop functionality for time blocks, allowing for duplication and repositioning.

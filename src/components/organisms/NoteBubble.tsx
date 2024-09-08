@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
-import CloudShape from '../molecules/CloudShape'
 
 interface NoteBubbleProps {
     timeBlockId: string
     color: string
     bgColor: string
     onClose: () => void
-    position: { top: number; left: number }
+    bubblePosition: { top: number; left: number }
 }
 
 const NoteBubble: React.FC<NoteBubbleProps> = ({
@@ -16,13 +15,21 @@ const NoteBubble: React.FC<NoteBubbleProps> = ({
     color,
     bgColor,
     onClose,
-    position,
+    bubblePosition,
 }) => {
     const { notes, setNoteForTimeBlock } = useTimeBlockContext()
     const existingNote = notes[timeBlockId]?.content || ''
     const [content, setContent] = useState(existingNote)
     const [showTextArea, setShowTextArea] = useState(false)
     const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
+
+    const [isLeftAligned, setIsLeftAligned] = useState(false)
+    const [isVisible, setIsVisible] = useState(false)
+
+    useEffect(() => {
+        const viewportWidth = window.innerWidth
+        setIsLeftAligned(bubblePosition.left + 300 > viewportWidth)
+    }, [bubblePosition])
 
     useEffect(() => {
         if (textAreaRef.current && showTextArea) {
@@ -31,10 +38,10 @@ const NoteBubble: React.FC<NoteBubbleProps> = ({
     }, [showTextArea])
 
     useEffect(() => {
-        // Set the timeout to match the animation duration
         const timer = setTimeout(() => {
             setShowTextArea(true)
-        }, 250) // 200ms is the duration of the animation
+            setIsVisible(true)
+        }, 250)
 
         return () => clearTimeout(timer)
     }, [])
@@ -43,10 +50,12 @@ const NoteBubble: React.FC<NoteBubbleProps> = ({
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             saveNote()
-            onClose()
+            setIsVisible(false)
+            setTimeout(onClose, 300)
         } else if (e.key === 'Escape') {
             e.preventDefault()
-            onClose()
+            setIsVisible(false)
+            setTimeout(onClose, 300)
         }
     }
 
@@ -58,7 +67,10 @@ const NoteBubble: React.FC<NoteBubbleProps> = ({
         <>
             <div
                 className="note-overlay"
-                onClick={onClose}
+                onClick={() => {
+                    setIsVisible(false)
+                    setTimeout(onClose, 300)
+                }}
                 style={{
                     position: 'fixed',
                     top: 0,
@@ -72,19 +84,27 @@ const NoteBubble: React.FC<NoteBubbleProps> = ({
             <div
                 style={{
                     position: 'absolute',
-                    top: position.top,
-                    left: position.left,
+                    top: bubblePosition.top,
+                    left: isLeftAligned
+                        ? bubblePosition.left - 320
+                        : bubblePosition.left + 20,
                     zIndex: 1000,
-                    width: '400px', // Adjust width as needed
-                    height: '400px', // Adjust height as needed
+                    width: '300px',
+                    backgroundColor: bgColor,
+                    border: `1px solid ${color}`,
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                    padding: '10px',
+                    backgroundImage: `linear-gradient(to bottom, transparent, transparent 16px, ${color}33 17px)`,
+                    backgroundSize: '100% 17px', // Closer lines
+                    boxSizing: 'border-box',
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible
+                        ? 'translateY(0)'
+                        : 'translateY(-10px)',
+                    transition: 'opacity 0.3s ease, transform 0.3s ease',
                 }}
             >
-                <CloudShape
-                    width={400}
-                    height={400}
-                    color={color}
-                    bgColor={bgColor}
-                />
                 {showTextArea && (
                     <textarea
                         ref={textAreaRef}
@@ -93,20 +113,18 @@ const NoteBubble: React.FC<NoteBubbleProps> = ({
                         onKeyDown={handleKeyDown}
                         placeholder="Type your note here..."
                         style={{
-                            position: 'absolute',
-                            bottom: '22%', // Adjust positioning over the cloud
-                            right: '23%',
-                            width: '200px',
-                            height: '140px',
+                            width: '100%',
+                            height: '120px',
                             border: 'none',
                             outline: 'none',
                             backgroundColor: 'transparent',
                             color: 'inherit',
                             resize: 'none',
                             fontFamily: 'inherit',
-                            fontSize: '1em',
-                            lineHeight: '1.5em',
-                            padding: '10px',
+                            fontSize: '0.9em',
+                            lineHeight: '1.2em',
+                            padding: '6px 10px 10px 10px',
+                            boxSizing: 'border-box',
                         }}
                     />
                 )}

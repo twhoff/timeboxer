@@ -4,7 +4,6 @@ import {
     loadNoteByTimeBlockId,
     TimeBlock,
     Schedule,
-    Note,
 } from '../db'
 
 export const useLoadTimeBlocks = (
@@ -12,7 +11,7 @@ export const useLoadTimeBlocks = (
     setTimeBlocks: React.Dispatch<
         React.SetStateAction<Record<string, TimeBlock[]>>
     >,
-    setNotes: React.Dispatch<React.SetStateAction<Record<string, Note | null>>>
+    setNoteForTimeBlock: (timeBlockId: string, content: string) => void
 ) => {
     useEffect(() => {
         schedules.forEach(schedule => {
@@ -24,22 +23,16 @@ export const useLoadTimeBlocks = (
                     }))
 
                     // Load notes for each time block
-                    const notes = await Promise.all(
+                    await Promise.all(
                         loadedTimeBlocks.map(async block => {
                             const note = await loadNoteByTimeBlockId(block.id)
-                            return note
-                                ? { [block.id]: note }
-                                : { [block.id]: null }
+                            if (note) {
+                                setNoteForTimeBlock(block.id, note.content)
+                            }
                         })
                     )
-
-                    // Merge loaded notes into the state
-                    setNotes(prevNotes => ({
-                        ...prevNotes,
-                        ...Object.assign({}, ...notes),
-                    }))
                 })
             }
         })
-    }, [schedules, setTimeBlocks, setNotes])
+    }, [schedules, setTimeBlocks, setNoteForTimeBlock])
 }
