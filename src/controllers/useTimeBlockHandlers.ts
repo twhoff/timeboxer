@@ -44,7 +44,8 @@ export const useTimeBlockHandlers = ({
         useState<boolean>(false)
     const [isUnlocked, setIsUnlocked] = useState<boolean>(false)
 
-    const { setTimeBlocks, setSelectedSchedule, notes } = useTimeBlockContext()
+    const { deleteTimeBlock, setSelectedSchedule, notes } =
+        useTimeBlockContext()
 
     const handleLockClick = () => {
         setIsUnlocked(true)
@@ -69,20 +70,16 @@ export const useTimeBlockHandlers = ({
         }
     }
 
-    const handleDeleteClick = (e: MouseEvent<HTMLButtonElement>) => {
+    const handleDeleteClick = async (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation()
         const rect = e.currentTarget.getBoundingClientRect()
         triggerConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
 
-        setTimeBlocks(prevBlocks => {
-            const updatedBlocks = { ...prevBlocks }
-            Object.keys(updatedBlocks).forEach(scheduleId => {
-                updatedBlocks[scheduleId] = updatedBlocks[scheduleId].filter(
-                    block => block.id !== blockId
-                )
-            })
-            return updatedBlocks
-        })
+        try {
+            await deleteTimeBlock(blockId, scheduleId) // Call to delete the time block
+        } catch (error) {
+            console.error('Failed to delete time block:', error)
+        }
     }
 
     const handleNoteIconClick = (e: MouseEvent<HTMLButtonElement>) => {

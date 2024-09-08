@@ -550,3 +550,10 @@ label {
         opacity: 1;
     }
 }
+
+.hover-line {
+    position: absolute;
+    width: 100%;
+    border-top: 1px dashed #000;
+    z-index: 1; /* Ensure it stays on top */
+}

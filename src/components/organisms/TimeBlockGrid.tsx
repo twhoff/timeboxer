@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useTimeBlockContext } from '../../context/TimeBlockContext'
 import { TimeBlock } from '../molecules/TimeBlock'
 import { IntervalLine } from '../atoms/IntervalLine'
@@ -7,6 +7,13 @@ import { TimeBlockPreview } from '../molecules/TimeBlockPreview'
 import { Schedule, type TimeBlock as TimeBlockType } from '../../db'
 import { formatTime, shouldRenderBlock } from '../../utils/timeBlockUtils'
 import { calculateBlockProps } from '../../utils/blockUtils'
+import { HoverLine } from '../atoms/HoverLine'
+import { calculateCurrentInterval } from '../../utils/mouseUtils'
+import {
+    HEADER_HEIGHT,
+    INTERVAL_HEIGHT,
+    RESIZE_THRESHOLD,
+} from '../../constants/constants'
 
 const daysOfWeek = [
     'Monday',
@@ -18,8 +25,6 @@ const daysOfWeek = [
     'Sunday',
 ]
 
-const RESIZE_THRESHOLD = 5
-
 export const TimeBlockGrid: React.FC = () => {
     const {
         currentBlock,
@@ -27,10 +32,16 @@ export const TimeBlockGrid: React.FC = () => {
         recentBlockId,
         selectedSchedule,
         schedules,
+        isHoverLineVisible,
     } = useTimeBlockContext()
+
     const { handleMouseDown, timeBlockPreviewProps } = useTimeBlockPlacement()
     const [bouncingBlockId, setBouncingBlockId] = useState<string | null>(null)
+    const [hoverPosition, setHoverPosition] = useState<number | null>(null)
+    const [isHoveringOverBlock, setIsHoveringOverBlock] = useState(false)
+
     const gridRef = useRef<HTMLDivElement>(null)
+    const isDrawingRef = useRef<boolean>(false)
     const isResizingRef = useRef<boolean>(false)
     const isRepositioningRef = useRef<boolean>(false)
 
@@ -44,6 +55,34 @@ export const TimeBlockGrid: React.FC = () => {
             return () => clearTimeout(timer)
         }
     }, [recentBlockId])
+
+    const handleMouseMove = useCallback(
+        (event: React.MouseEvent) => {
+            if (isHoveringOverBlock) {
+                setHoverPosition(null)
+                return
+            }
+
+            const gridColumn = event.currentTarget as HTMLElement
+            const columnRect = gridColumn.getBoundingClientRect()
+            const currentInterval = calculateCurrentInterval(
+                event.clientY,
+                columnRect
+            )
+            setHoverPosition(
+                (currentInterval - 1) * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT
+            ) // Convert interval back to pixel position
+        },
+        [isHoveringOverBlock]
+    )
+
+    const handleMouseEnterBlock = () => {
+        setIsHoveringOverBlock(true)
+    }
+
+    const handleMouseLeaveBlock = () => {
+        setIsHoveringOverBlock(false)
+    }
 
     const handleMouseDownOnTimeBlock = (
         dayIndex: number,
@@ -112,6 +151,7 @@ export const TimeBlockGrid: React.FC = () => {
             return
         }
 
+        isDrawingRef.current = true
         handleMouseDown(dayIndex, e)
     }
 
@@ -148,6 +188,8 @@ export const TimeBlockGrid: React.FC = () => {
                     onMouseDown={e =>
                         handleMouseDownOnTimeBlock(dayIndex, e, block.id)
                     }
+                    onMouseEnter={handleMouseEnterBlock}
+                    onMouseLeave={handleMouseLeaveBlock}
                 >
                     {block.id !== null && (
                         <TimeBlock
@@ -163,7 +205,6 @@ export const TimeBlockGrid: React.FC = () => {
                             opacity={opacity}
                             zIndex={zIndex}
                             timeRange={timeRange}
-                            dayIndex={dayIndex}
                         />
                     )}
                 </div>
@@ -187,7 +228,10 @@ export const TimeBlockGrid: React.FC = () => {
     }
 
     return (
-        <div className="container" ref={gridRef}>
+        <div className="container" ref={gridRef} onMouseMove={handleMouseMove}>
+            {hoverPosition !== null && (
+                <HoverLine top={hoverPosition} isVisible={isHoverLineVisible} />
+            )}
             {daysOfWeek.map((day, dayIndex) => (
                 <div
                     key={dayIndex}

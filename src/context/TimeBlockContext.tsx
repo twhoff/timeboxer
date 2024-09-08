@@ -5,11 +5,12 @@ import React, {
     useMemo,
     useCallback,
 } from 'react'
-import type { TimeBlock, Schedule, Note } from '../db' // Ensure Note is imported here
+import type { TimeBlock, Schedule, Note } from '../db'
 import { useFetchSchedules } from '../controllers/useFetchSchedules'
 import { useLoadTimeBlocks } from '../controllers/useLoadTimeBlocks'
 import { useSaveData } from '../controllers/useSaveData'
-import { useNotes } from '../controllers/useNotes' // Import the custom hook
+import { useNotes } from '../controllers/useNotes'
+import { deleteTimeBlockById, deleteScheduleById } from '../db' // Import necessary functions
 
 export interface TimeBlockContextType {
     timeBlocks: Record<string, TimeBlock[]>
@@ -32,9 +33,13 @@ export interface TimeBlockContextType {
         newStart: number,
         newEnd: number
     ) => void
+    deleteTimeBlock: (timeBlockId: string, scheduleId: string) => Promise<void>
+    deleteSchedule: (scheduleId: string) => Promise<void>
     notes: Record<string, Note | null>
     setNoteForTimeBlock: (timeBlockId: string, content: string) => void
     deleteNoteForTimeBlock: (timeBlockId: string) => void
+    isHoverLineVisible: boolean
+    setIsHoverLineVisible: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export const TimeBlockContext = createContext<TimeBlockContextType | undefined>(
@@ -53,11 +58,12 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
     const [selectedSchedule, setSelectedSchedule] = useState<string | null>(
         null
     )
+    const [isHoverLineVisible, setIsHoverLineVisible] = useState<boolean>(true)
 
-    const { notes, setNoteForTimeBlock, deleteNoteForTimeBlock } = useNotes() // Use the custom hook
+    const { notes, setNoteForTimeBlock, deleteNoteForTimeBlock } = useNotes()
 
     useFetchSchedules(setSchedules, setSelectedSchedule, setTimeBlocks)
-    useLoadTimeBlocks(schedules, setTimeBlocks, setNoteForTimeBlock) // Remove setNotes, use setNoteForTimeBlock if needed
+    useLoadTimeBlocks(schedules, setTimeBlocks, setNoteForTimeBlock)
     useSaveData(schedules, timeBlocks, selectedSchedule)
 
     const clearAllBlocks = useCallback(() => {
@@ -102,6 +108,60 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
         []
     )
 
+    const deleteTimeBlock = useCallback(
+        async (timeBlockId: string, scheduleId: string) => {
+            try {
+                // Delete from database
+                await deleteTimeBlockById(timeBlockId)
+
+                // Update the state to remove the time block
+                setTimeBlocks(prevBlocks => {
+                    const updatedBlocks = { ...prevBlocks }
+                    const scheduleBlocks = updatedBlocks[scheduleId] || []
+                    const newBlocks = scheduleBlocks.filter(
+                        block => block.id !== timeBlockId
+                    )
+                    return {
+                        ...updatedBlocks,
+                        [scheduleId]: newBlocks,
+                    }
+                })
+
+                // Optionally, handle note deletion if necessary
+                deleteNoteForTimeBlock(timeBlockId)
+            } catch (error) {
+                console.error('Failed to delete time block:', error)
+            }
+        },
+        [deleteNoteForTimeBlock]
+    )
+
+    const deleteSchedule = useCallback(
+        async (scheduleId: string) => {
+            try {
+                await deleteScheduleById(scheduleId)
+
+                // Update the local state to reflect the change
+                setSchedules(prevSchedules =>
+                    prevSchedules.filter(schedule => schedule.id !== scheduleId)
+                )
+                setTimeBlocks(prevBlocks => {
+                    const updatedBlocks = { ...prevBlocks }
+                    delete updatedBlocks[scheduleId]
+                    return updatedBlocks
+                })
+
+                // Clear selected schedule if it was deleted
+                if (selectedSchedule === scheduleId) {
+                    setSelectedSchedule(null)
+                }
+            } catch (error) {
+                console.error('Failed to delete schedule:', error)
+            }
+        },
+        [selectedSchedule]
+    )
+
     const value = useMemo(
         () => ({
             timeBlocks,
@@ -116,9 +176,13 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             selectedSchedule,
             setSelectedSchedule,
             updateBlockPosition,
+            deleteTimeBlock,
+            deleteSchedule,
             notes,
             setNoteForTimeBlock,
             deleteNoteForTimeBlock,
+            isHoverLineVisible,
+            setIsHoverLineVisible,
         }),
         [
             timeBlocks,
@@ -128,7 +192,10 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({
             schedules,
             selectedSchedule,
             updateBlockPosition,
+            deleteTimeBlock,
+            deleteSchedule,
             notes,
+            isHoverLineVisible,
         ]
     )
 

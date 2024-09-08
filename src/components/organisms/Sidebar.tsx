@@ -16,8 +16,7 @@ const Sidebar: React.FC = () => {
         setSchedules,
         selectedSchedule,
         setSelectedSchedule,
-        timeBlocks,
-        setTimeBlocks,
+        deleteSchedule,
     } = useContext(TimeBlockContext)!
     const [newScheduleName, setNewScheduleName] = useState('')
     const [showAll, setShowAll] = useState(false)
@@ -107,11 +106,8 @@ const Sidebar: React.FC = () => {
         setContextMenu(null)
     }
 
-    const confirmDeleteSchedule = (id: string) => {
-        setSchedules(schedules.filter(schedule => schedule.id !== id))
-        const updatedTimeBlocks = { ...timeBlocks }
-        delete updatedTimeBlocks[id]
-        setTimeBlocks(updatedTimeBlocks)
+    const confirmDeleteSchedule = async (id: string) => {
+        await deleteSchedule(id)
         setConfirmDelete(null)
     }
 
@@ -129,7 +125,6 @@ const Sidebar: React.FC = () => {
             setCurrentColors({ newColor: originalColor, newBgColor: '' })
             return
         }
-        console.log(segmentIndex)
         const rotatorValue = GOLDEN_ANGLE * (segmentIndex + 1)
         const currentHue = rotatorValue % MAX_HUE
         const colors = await generateADHDFriendlyColors(currentHue)
@@ -143,7 +138,6 @@ const Sidebar: React.FC = () => {
         scheduleColor: string
     ) => {
         if (selectedSchedule === scheduleId) {
-            // If the schedule is selected, unselect it
             toggleSelectedSchedule(null)
             return
         }
@@ -158,17 +152,6 @@ const Sidebar: React.FC = () => {
                 )
             )
             setClickedSquare(null)
-            setTimeBlocks(prevBlocks => {
-                const updatedBlocks = { ...prevBlocks }
-                Object.keys(updatedBlocks).forEach(key => {
-                    updatedBlocks[key].forEach(block => {
-                        if (block.scheduleId === scheduleId) {
-                            block.color = color
-                        }
-                    })
-                })
-                return updatedBlocks
-            })
         } else {
             setCurrentColors({ newColor: scheduleColor, newBgColor: '' })
             setClickedSquare(scheduleId)
@@ -179,7 +162,7 @@ const Sidebar: React.FC = () => {
         const colors = []
         let rotatorValue = GOLDEN_ANGLE
         for (let i = 0; i < COLOR_SEGMENTS; i++) {
-            const currentHue = rotatorValue % MAX_HUE // Increment using golden angle
+            const currentHue = rotatorValue % MAX_HUE
             const { bgColor } = await generateADHDFriendlyColors(currentHue)
             colors.push(bgColor)
             rotatorValue += GOLDEN_ANGLE
@@ -383,7 +366,7 @@ const Sidebar: React.FC = () => {
                             Delete schedule
                         </button>
                     </div>,
-                    document.body // Attach to document body
+                    document.body
                 )}
             {confirmDelete && (
                 <div className="confirmation-dialog">

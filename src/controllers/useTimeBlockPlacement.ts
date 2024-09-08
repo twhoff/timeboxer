@@ -28,6 +28,7 @@ export const useTimeBlockPlacement = () => {
         schedules,
         selectedSchedule,
         timeBlocks,
+        setIsHoverLineVisible,
     } = useTimeBlockContext()
 
     const [timeIndicator, setTimeIndicator] = useState<string>('')
@@ -58,6 +59,7 @@ export const useTimeBlockPlacement = () => {
         setTimeIndicator('')
         setPointOfOrigin(null)
         setTimeBlockPreviewProps(null)
+        setIsHoverLineVisible(true)
         isCreating.current = false
         isDuplicating.current = false
         processedDayIndices.current.clear()
@@ -128,6 +130,8 @@ export const useTimeBlockPlacement = () => {
         )
 
         if (!schedule) return
+
+        setIsHoverLineVisible(false)
 
         // No blockId? New block.
         if (!blockId) {
