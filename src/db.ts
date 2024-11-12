@@ -107,16 +107,23 @@ export async function exportData(): Promise<void> {
     }
 }
 
+export async function clearData(): Promise<void> {
+    const db = await initDB()
+
+    // Clear existing data
+    await db.clear(TIME_BLOCK_STORE)
+    await db.clear(SCHEDULE_STORE)
+    await db.clear(NOTE_STORE)
+    await db.put(ROTATOR_STORE, 0, ROTATOR_KEY)
+}
+
 export async function importData(jsonData: string): Promise<void> {
     try {
         const db = await initDB()
         const data: ExportedData = JSON.parse(jsonData)
 
         // Clear existing data
-        await db.clear(TIME_BLOCK_STORE)
-        await db.clear(SCHEDULE_STORE)
-        await db.clear(NOTE_STORE)
-        await db.put(ROTATOR_STORE, 0, ROTATOR_KEY) // Reset rotator value
+        await clearData()
 
         // Import new data
         const scheduleTimeBlocks: TimeBlock[][] = data.timeBlocks

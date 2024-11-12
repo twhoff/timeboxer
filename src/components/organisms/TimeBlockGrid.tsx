@@ -70,7 +70,7 @@ export const TimeBlockGrid: React.FC = () => {
                 columnRect
             )
             setHoverPosition(
-                (currentInterval - 1) * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT
+                currentInterval * (INTERVAL_HEIGHT / 4) + HEADER_HEIGHT
             ) // Convert interval back to pixel position
         },
         [isHoveringOverBlock]
